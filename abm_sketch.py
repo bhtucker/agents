@@ -36,7 +36,7 @@ cluster_colors = {
 }
 
 MESSAGES = [
-    "message one",
+    "message uno",
     "message dos",
 ]
 
