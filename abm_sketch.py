@@ -36,8 +36,8 @@ cluster_colors = {
 }
 
 MESSAGES = [
-    'go fish',
-    "don't go fish"
+    "message one",
+    "message dos",
 ]
 
 class Population(object):
@@ -207,4 +207,10 @@ def get_connectivity_matrix(points):
     connectivity_matrix = distance_mat < neighbor_cutoff
     return connectivity_matrix
 
-    
+
+def run():
+    pop = make_population()
+    pop.initiate_task()
+
+if __name__ == '__main__':
+    run()
