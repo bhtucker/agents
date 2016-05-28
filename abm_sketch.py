@@ -55,15 +55,23 @@ class Population(object):
         if recipient == task.target:
             # import ipdb ; ipdb.set_trace#z()  # breakpoint 223cdcc4 //
 
-            k = float(len(self.path))
-            for ix, point in enumerate(self.path):
-                i_value = (task.value / k) + ((k - ix) * 5)
-                self.points[point].award(i_value)
+            for point in self.path:
+                amount = self.calculate_award(task, self.path, point)
+                self.points[point].award(amount)
 
             self.success_lens.append(len(self.path))
             self.path = []
 
         self.points[recipient].receive_task(task, sender)
+
+
+    def calculate_award(self, task, path, entity):
+        """
+        Returns the amount awarded to <entity> after <task> has been
+        routed through <path>.
+        """
+        k = k = float(len(path))
+        return (task.value / k) + ((k - path.index(entity)) * 5)
 
 
     def set_connections(self):
