@@ -52,6 +52,7 @@ class Population(object):
         self.path = []
         self.show = True
         self.success_lens = []
+        self.connectivity_matrix = None
 
 
     def pass_message(self, recipient, task, sender):
@@ -62,7 +63,7 @@ class Population(object):
         Entity.
         """
 
-        display(self.points, self.connectivity_matrix, recipient, task.target, show=self.show)
+        self.display(recipient, task.target)
 
         self.path.append(recipient)
         if recipient == task.target:
@@ -87,8 +88,38 @@ class Population(object):
             point.set_adjacencies(self.connectivity_matrix[index])
 
 
-    def display(self):
-        display(self.points, self.connectivity_matrix, show=self.show)
+    def display(self, current=None, target=None):
+        """
+        Plots the state of the task. If <show> = False, doesn't plot
+        anything and the simulation can run faster.
+        """
+
+        if not self.show:
+            return
+
+        # Scatter plot of points, color coded by class
+        pts = self.points
+        size = 35
+        for cluster, color in cluster_colors.iteritems():
+            class_points = [x for x in pts if x.cluster == cluster]
+            plt.scatter([p.x for p in class_points], [p.y for p in class_points], c=color, s=size)
+
+        # Draw the connections
+        if self.connectivity_matrix is not None:
+            for start_ix, connections in enumerate(self.connectivity_matrix):
+                for connect_ix, connected in enumerate(connections):
+                    if connected and connect_ix != start_ix:
+                        plt.plot(*zip(
+                            (pts[start_ix].x, pts[start_ix].y),
+                            (pts[connect_ix].x, pts[connect_ix].y)),
+                            c='k', linewidth=0.5)
+
+        # Show where the message is going and where it currently is
+        if current and target:
+            plt.scatter(pts[current].x, pts[current].y, c='m', s=150)
+            plt.scatter(pts[target].x,  pts[target].y,  c='y', s=190)
+
+        plt.show()
 
 
     def initiate_task(self, fixed_pair=None):
@@ -229,39 +260,6 @@ def make_population():
 
     population.set_connections()
     return population
-
-
-def display(points, connectivity_matrix=None, current_ix=None, target_ix=None, show=True):
-    """
-    Plots the state of the task. If <show> = False, doesn't plot
-    anything and the simulation can run faster.
-    """
-
-    if not show:
-        return
-
-    # Scatter plot of points, color coded by class
-    size = 35
-    for cluster, color in cluster_colors.iteritems():
-        class_points = [x for x in points if x.cluster == cluster]
-        plt.scatter([p.x for p in class_points], [p.y for p in class_points], c=color, s=size)
-
-    # Add the connections
-    if connectivity_matrix is not None:
-        for start_ix, connections in enumerate(connectivity_matrix):
-            for connect_ix, connected in enumerate(connections):
-                if connected and connect_ix != start_ix:
-                    plt.plot(*zip(
-                        (points[start_ix].x, points[start_ix].y),
-                        (points[connect_ix].x, points[connect_ix].y)),
-                        c='k', linewidth=0.5)
-
-    # Show where the message is going and where it currently is
-    if current_ix and target_ix:
-        plt.scatter(points[current_ix].x, points[current_ix].y, c='m', s=150)
-        plt.scatter(points[target_ix].x, points[target_ix].y, c='y', s=190)
-
-    plt.show()
 
 
 def get_connectivity_matrix(points):
