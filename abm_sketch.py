@@ -17,6 +17,20 @@ from collections import defaultdict
 
 
 
+y_pos_dist = norm(300, 10)
+
+cluster_x_dists = {
+    'A': uniform(0, 40),
+    'B': uniform(20, 60),
+    'C': uniform(40, 80)
+}
+
+cluster_sizes = {
+    'A': 8,
+    'B': 10,
+    'C': 8
+}
+
 cluster_colors = {
     'A': 'r',
     'B': 'b',
@@ -339,19 +353,5 @@ def run(y_pos_dist, cluster_x_dists, cluster_sizes):
 
 
 if __name__ == '__main__':
-
-    y_pos_dist = norm(500, 10)
-
-    cluster_x_dists = {
-        'A': uniform(0, 50),
-        'B': uniform(30, 50),
-        'C': uniform(60, 50)
-    }
-
-    cluster_sizes = {
-        'A': 10,
-        'B': 15,
-        'C': 12
-    }
 
     run(y_pos_dist, cluster_x_dists, cluster_sizes)
