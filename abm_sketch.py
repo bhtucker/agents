@@ -184,11 +184,11 @@ class Entity(object):
         if sender in self.sent:
             print('popping %s' % self.sent.pop(self.sent.index(sender)))
 
-        # if I have passed the message to all of my neighbors and I still
-        # received it back, bail out
-        # FIXME: this catches cycles eventually, but also catches randomly
-        # followed closed paths
+        # If I have passed the message to all of my neighbors and I still
+        # received it back, bail out.
         if set(self.adjacencies).issubset(set(self.task_attempt_map[task.id])):
+            # FIXME: this catches cycles eventually, but also catches randomly
+            # followed closed paths
             print 'caught in a cycle! bailing!'
             self.population.clear()
             return
