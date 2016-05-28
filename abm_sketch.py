@@ -85,9 +85,36 @@ class Population(object):
     def set_connections(self):
         """Initializes each Entity's adjacency list."""
 
-        self.connectivity_matrix = get_connectivity_matrix(self.points)
+        self.make_connectivity_matrix()
         for index, point in enumerate(self.points):
             point.set_adjacencies(self.connectivity_matrix[index])
+
+
+    def make_connectivity_matrix(self):
+        """
+        Computes the connectivity matrix of this Population. Each point is
+        connected to each other within a radius.
+        """
+
+        if self.connectivity_matrix:
+            return
+
+        points_arr = np.array([[p.x, p.y] for p in self.points])
+        distance_mat = euclidean_distances(points_arr, points_arr)
+
+        # Every point p will be connected to each other point whose distance
+        # to p is less than a cut-off value. This value is computed as the
+        # mean of {min_nonzero(dist_mat(p)) | p is a point}, times a factor
+        min_nonzero = lambda r: min(r[r > 0])
+
+        # apply_along_axis(f, axis=1, arr) applies f to each row
+        min_neighbor_distances = np.apply_along_axis(min_nonzero, axis=1, arr=distance_mat)
+
+        factor = 2.2
+        neighbor_cutoff = np.mean(min_neighbor_distances) * factor
+        connectivity_matrix = distance_mat < neighbor_cutoff
+
+        self.connectivity_matrix = connectivity_matrix
 
 
     def display(self, current=None, target=None):
@@ -325,34 +352,11 @@ def make_population(y_pos_dist, cluster_x_dists, cluster_sizes):
     return population
 
 
-def get_connectivity_matrix(points):
-    """
-    Computes the connectivity matrix of <points>. Each point is
-    connected to each other within a radius.
-    """
-
-    points_arr = np.array([[p.x, p.y] for p in points])
-    distance_mat = euclidean_distances(points_arr, points_arr)
-
-    # Every point p will be connected to each other point whose distance
-    # to p is less than a cut-off value. This value is computed as the
-    # mean of {min_nonzero(dist_mat(p)) | p is a point}, times a factor
-    min_nonzero = lambda r: min(r[r > 0])
-
-    # apply_along_axis(f, axis=1, arr) applies f to each row
-    min_neighbor_distances = np.apply_along_axis(min_nonzero, axis=1, arr=distance_mat)
-
-    factor = 2.2
-    neighbor_cutoff = np.mean(min_neighbor_distances) * factor
-    connectivity_matrix = distance_mat < neighbor_cutoff
-
-    return connectivity_matrix
-
-
 def run(y_pos_dist, cluster_x_dists, cluster_sizes):
     """Creates and sets up a Population and runs initiate_task()."""
 
     pop = make_population(y_pos_dist, cluster_x_dists, cluster_sizes)
+    pop.show = False
     pop.initiate_task()
 
 
