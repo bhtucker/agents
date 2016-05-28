@@ -225,24 +225,45 @@ class Entity(object):
     def award(self, value):
         """
         Accepts <value> as award after having participated in the
-        successful routing of a message.
+        successful routing of a message. Calls self.learn() and then
+        cleans up to prepare for the next message.
         """
 
         self.value += value
         print(self.value, self.index, self.adjacencies)
 
+        self.learn()
+
+        self.value = 0
+        self.sent = []
+
+
+    def learn(self):
+        """Learns about the world after receiving an award."""
+
+        # After an award, we choose some adjacencies and increase the
+        # likelihood of their being chosen for a message next time
+        # around.
+
+        # The probability of choosing an adjacency to increase its
+        # likelihood is proportional to the value of the award received.
+
+        # Since at every step we choose at random from our list of
+        # adjacencies, to increase the likelihood of one of them being
+        # chosen, we need only add them again to this list, i.e., if my
+        # adjacencies are [1,2,3] and sending a message to 2 was
+        # successful, our new adjacency list is [1,2,3,2], and when we
+        # choose uniformly from this list, we will be more likely to
+        # choose 2 again.
+
         for adj in self.sent:
             assert adj in self.adjacencies
 
             u_val = uniform.rvs(0, 100, 1)
-            print(u_val, u_val < value)
-            if u_val < value:
+            print(u_val, u_val < self.value)
+            if u_val < self.value:
                 self.adjacencies.append(adj)
                 # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
-
-        # prepare for the next message
-        self.value = 0
-        self.sent = []
 
 
 
