@@ -169,20 +169,25 @@ class Entity(object):
         # extended adjacency list (see pass_message() and learn())
         self.adjacencies = []
 
-
+        
         self.task_attempt_map = defaultdict(lambda: [index])
 
 
     def receive_task(self, task, sender):
         """Handles a message received. Calls pass_message()."""
 
+        print("%d: past receipients are " % (self.index,) + str(self.sent))
+
         if sender not in self.task_attempt_map[task.id]:
             self.task_attempt_map[task.id].append(sender)
-        print("%d: past receipients are " % (self.index,) + str(self.sent))
 
         if sender in self.sent:
             print('popping %s' % self.sent.pop(self.sent.index(sender)))
 
+        # if I have passed the message to all of my neighbors and I still
+        # received it back, bail out
+        # FIXME: this catches cycles eventually, but also catches randomly
+        # followed closed paths
         if set(self.adjacencies).issubset(set(self.task_attempt_map[task.id])):
             print 'caught in a cycle! bailing!'
             self.population.clear()
