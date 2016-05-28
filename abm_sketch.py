@@ -25,12 +25,6 @@ cluster_x_dists = {
     'C': uniform(60, 50)
 }
 
-cluster_sizes = {
-    'A': 10,
-    'B': 15,
-    'C': 12
-}
-
 cluster_colors = {
     'A': 'r',
     'B': 'b',
@@ -246,7 +240,7 @@ def make_points(cluster, size):
     return list(zip(xs, ys, [cluster] * size))
 
 
-def make_population():
+def make_population(cluster_sizes):
     """Creates a Population and sets its connections. Uses make_points."""
 
     points = []
@@ -282,13 +276,19 @@ def get_connectivity_matrix(points):
     return connectivity_matrix
 
 
-def run():
+def run(cluster_sizes):
     """Creates and sets up a Population and runs initiate_task()."""
 
-    pop = make_population()
+    pop = make_population(cluster_sizes)
     pop.initiate_task()
 
 
 
 if __name__ == '__main__':
-    run()
+    cluster_sizes = {
+        'A': 10,
+        'B': 15,
+        'C': 12
+    }
+    
+    run(cluster_sizes)
