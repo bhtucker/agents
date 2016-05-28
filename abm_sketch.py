@@ -293,12 +293,16 @@ def get_connectivity_matrix(points):
     points_arr = np.array([[p.x, p.y] for p in points])
     distance_mat = euclidean_distances(points_arr, points_arr)
 
+    # Every point p will be connected to each other point whose distance
+    # to p is less than a cut-off value. This value is computed as the
+    # mean of {min_nonzero(dist_mat(p)) | p is a point}, times a factor
     min_nonzero = lambda r: min(r[r > 0])
-    # axis=1 is the horizontal axis (row-wise)
+
+    # apply_along_axis(f, axis=1, arr) applies f to each row
     min_neighbor_distances = np.apply_along_axis(min_nonzero, axis=1, arr=distance_mat)
 
-    # WHY 2.2 ?
-    neighbor_cutoff = np.mean(min_neighbor_distances) * 2.2
+    factor = 2.2
+    neighbor_cutoff = np.mean(min_neighbor_distances) * factor
     connectivity_matrix = distance_mat < neighbor_cutoff
 
     return connectivity_matrix
