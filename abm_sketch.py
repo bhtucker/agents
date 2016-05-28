@@ -17,14 +17,6 @@ from collections import defaultdict
 
 
 
-y_pos_dist = norm(500, 10)
-
-cluster_x_dists = {
-    'A': uniform(0, 50),
-    'B': uniform(30, 50),
-    'C': uniform(60, 50)
-}
-
 cluster_colors = {
     'A': 'r',
     'B': 'b',
@@ -232,20 +224,20 @@ class Entity(object):
 
 
 
-def make_points(cluster, size):
-    """Creates a set of points using y_pos_dist and cluster_x_dists."""
+def make_points(cluster, size, y_dist, x_dist):
+    """Creates a set of points using y_dist and x_dist to draw the location."""
 
-    ys = y_pos_dist.rvs(size)
-    xs = cluster_x_dists[cluster].rvs(size)
+    ys = y_dist.rvs(size)
+    xs = x_dist.rvs(size)
     return list(zip(xs, ys, [cluster] * size))
 
 
-def make_population(cluster_sizes):
+def make_population(y_pos_dist, cluster_x_dists, cluster_sizes):
     """Creates a Population and sets its connections. Uses make_points."""
 
     points = []
-    for cluster, count in cluster_sizes.iteritems():
-        points += make_points(cluster, count)
+    for cluster, size in cluster_sizes.iteritems():
+        points += make_points(cluster, size, y_pos_dist, cluster_x_dists[cluster])
 
     population = Population()
     for ix, point in enumerate(points):
@@ -276,19 +268,28 @@ def get_connectivity_matrix(points):
     return connectivity_matrix
 
 
-def run(cluster_sizes):
+def run(y_pos_dist, cluster_x_dists, cluster_sizes):
     """Creates and sets up a Population and runs initiate_task()."""
 
-    pop = make_population(cluster_sizes)
+    pop = make_population(y_pos_dist, cluster_x_dists, cluster_sizes)
     pop.initiate_task()
 
 
 
 if __name__ == '__main__':
+
+    y_pos_dist = norm(500, 10)
+
+    cluster_x_dists = {
+        'A': uniform(0, 50),
+        'B': uniform(30, 50),
+        'C': uniform(60, 50)
+    }
+
     cluster_sizes = {
         'A': 10,
         'B': 15,
         'C': 12
     }
     
-    run(cluster_sizes)
+    run(y_pos_dist, cluster_x_dists, cluster_sizes)
