@@ -193,6 +193,12 @@ class Entity(object):
 
 
     def pass_message(self, task, sender):
+        """
+        If this Entity knows the target, send the message directly.
+        Otherwise, choose randomly among the (extended) adjacency list.
+        Calls Population.pass_message() with the chosen target.
+        """
+
         next_recipient = task.target if task.target in self.adjacencies else self.index
 
         while next_recipient in self.task_attempt_map[task.id]:
@@ -200,6 +206,7 @@ class Entity(object):
 
         self.task_attempt_map[task.id].append(next_recipient)
         print "passing message from %s to %s" % (self.index, next_recipient)
+
         self.sent.append(next_recipient)
         self.population.pass_message(next_recipient, task, self.index)
 
@@ -216,17 +223,24 @@ class Entity(object):
 
 
     def award(self, value):
+        """
+        Accepts <value> as award after having participated in the
+        successful routing of a message.
+        """
+
         self.value += value
         print(self.value, self.index, self.adjacencies)
 
         for adj in self.sent:
             assert adj in self.adjacencies
+
             u_val = uniform.rvs(0, 100, 1)
             print(u_val, u_val < value)
             if u_val < value:
                 self.adjacencies.append(adj)
                 # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
 
+        # prepare for the next message
         self.value = 0
         self.sent = []
 
@@ -299,5 +313,5 @@ if __name__ == '__main__':
         'B': 15,
         'C': 12
     }
-    
+
     run(y_pos_dist, cluster_x_dists, cluster_sizes)
