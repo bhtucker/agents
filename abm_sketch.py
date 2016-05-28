@@ -23,11 +23,6 @@ cluster_colors = {
     'C': 'g'
 }
 
-MESSAGES = [
-    "message uno",
-    "message dos",
-]
-
 
 
 class Population(object):
@@ -127,11 +122,10 @@ class Population(object):
         while start == end:
             [start, end] = np.random.randint(len(self.points), size=2).tolist()
 
-        message = choice(MESSAGES)
-        print('new task: %s' % message)
+        print('new task created')
         print('starting at %s and aiming for %s' % (start, end))
 
-        task = Task(end, message)
+        task = Task(end)
         self.pass_message(start, task, len(self.points))
 
 
@@ -153,9 +147,8 @@ class Population(object):
 class Task(object):
     """Represents a message to be routed."""
 
-    def __init__(self, target, message):
+    def __init__(self, target):
         self.target = target
-        self.message = message
         self.id = uuid4()
         self.value = 100
 
@@ -187,7 +180,7 @@ class Entity(object):
             self.population.clear()
             return
         if self.index == task.target:
-            print 'message delivered! %s' % task.message
+            print 'message delivered!'
         else:
             self.pass_message(task, sender)
 
