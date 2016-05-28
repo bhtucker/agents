@@ -45,8 +45,9 @@ class Population(object):
         """
 
         self.display(recipient, task.target)
-
         self.path.append(recipient)
+        self.points[recipient].receive_task(task, sender)
+
         if recipient == task.target:
             # import ipdb ; ipdb.set_trace#z()  # breakpoint 223cdcc4 //
 
@@ -56,8 +57,6 @@ class Population(object):
 
             self.success_lens.append(len(self.path))
             self.path = []
-
-        self.points[recipient].receive_task(task, sender)
 
 
     def calculate_award(self, task, path, entity):
