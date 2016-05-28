@@ -169,7 +169,8 @@ class Entity(object):
         # extended adjacency list (see pass_message() and learn())
         self.adjacencies = []
 
-        
+        # task_attempt_map[task_id] hold a list of the neighbors to whom
+        # this entity gave the task
         self.task_attempt_map = defaultdict(lambda: [index])
 
 
