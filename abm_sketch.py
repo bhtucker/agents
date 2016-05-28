@@ -139,7 +139,7 @@ class Population(object):
         print('starting at %s and aiming for %s' % (start, end))
 
         task = Task(end)
-        self.pass_message(start, task, len(self.points))
+        self.pass_message(start, task, None)
 
 
     def clear(self):
@@ -189,15 +189,20 @@ class Entity(object):
 
 
     def receive_task(self, task, sender):
-        """Handles a message received. Calls pass_message()."""
+        """
+        Handles a message received. Calls pass_message(). Use
+        sender=None if this is the Entity that receives the original
+        message.
+        """
 
         print("%d: past receipients are " % (self.index,) + str(self.sent))
 
-        if sender not in self.task_attempt_map[task.id]:
-            self.task_attempt_map[task.id].append(sender)
+        if sender:
+            if sender not in self.task_attempt_map[task.id]:
+                self.task_attempt_map[task.id].append(sender)
 
-        if sender in self.sent:
-            print('popping %s' % self.sent.pop(self.sent.index(sender)))
+            if sender in self.sent:
+                print('popping %s' % self.sent.pop(self.sent.index(sender)))
 
         # If I have passed the message to all of my neighbors and I still
         # received it back, bail out.
