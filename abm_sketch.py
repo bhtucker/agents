@@ -162,23 +162,33 @@ class Entity(object):
         self.y = y
         self.index = index
         self.cluster = cluster
-        self.adjacencies = []
         self.population = population
+
+        self.sent = []    # list of points to whom I've passed the current message
+        self.value = 0    # value awarded for a successful message
+
+        # extended adjacency list (see pass_message() and learn())
+        self.adjacencies = []
+
+
         self.task_attempt_map = defaultdict(lambda: [index])
-        self.sent = []
-        self.value = 0
 
 
     def receive_task(self, task, sender):
+        """Handles a message received. Calls pass_message()."""
+
         if sender not in self.task_attempt_map[task.id]:
             self.task_attempt_map[task.id].append(sender)
-        print(sender, self.sent)
+        print("%d: past receipients are " % (self.index,) + str(self.sent))
+
         if sender in self.sent:
             print('popping %s' % self.sent.pop(self.sent.index(sender)))
+
         if set(self.adjacencies).issubset(set(self.task_attempt_map[task.id])):
             print 'caught in a cycle! bailing!'
             self.population.clear()
             return
+
         if self.index == task.target:
             print 'message delivered!'
         else:
@@ -198,7 +208,7 @@ class Entity(object):
             next_recipient = choice(self.adjacencies)
 
         self.task_attempt_map[task.id].append(next_recipient)
-        print "passing message from %s to %s" % (self.index, next_recipient)
+        print "%s -> %s" % (self.index, next_recipient)
 
         self.sent.append(next_recipient)
         self.population.pass_message(next_recipient, task, self.index)
@@ -223,7 +233,10 @@ class Entity(object):
         """
 
         self.value += value
-        print(self.value, self.index, self.adjacencies)
+        print("")
+        print("awarding %.2f to %d" % (self.value, self.index))
+        print("Map: " + str(dict(self.task_attempt_map)))
+        print("Adj before: " + str(self.adjacencies))
 
         self.learn()
 
@@ -245,18 +258,22 @@ class Entity(object):
         # adjacencies, to increase the likelihood of one of them being
         # chosen, we need only add them again to this list, i.e., if my
         # adjacencies are [1,2,3] and sending a message to 2 was
-        # successful, our new adjacency list is [1,2,3,2], and when we
-        # choose uniformly from this list, we will be more likely to
-        # choose 2 again.
+        # successful, our new extended adjacency list is [1,2,3,2], and
+        # when we choose uniformly from this list, we will be more
+        # likely to choose 2 again.
+
+        # print("learning on %d" % self.index)
 
         for adj in self.sent:
             assert adj in self.adjacencies
 
             u_val = uniform.rvs(0, 100, 1)
-            print(u_val, u_val < self.value)
+            # print("u_val is %d, learn? %r" % (u_val, u_val < self.value))
             if u_val < self.value:
                 self.adjacencies.append(adj)
                 # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
+
+        print("Adj after:  " + str(self.adjacencies))
 
 
 
