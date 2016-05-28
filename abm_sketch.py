@@ -16,9 +16,11 @@ from uuid import uuid4
 from collections import defaultdict
 
 
+
 y_pos_dist = norm(500, 10)
+
 cluster_x_dists = {
-    'A': uniform(0, 50), 
+    'A': uniform(0, 50),
     'B': uniform(30, 50),
     'C': uniform(60, 50)
 }
@@ -40,12 +42,16 @@ MESSAGES = [
     "message dos",
 ]
 
+
+
 class Population(object):
+
     def __init__(self):
         self.points = []
         self.path = []
         self.show = True
         self.success_lens = []
+
 
     def pass_message(self, recipient, task, sender):
         display(self.points, self.connectivity_matrix, recipient, task.target, show=self.show)
@@ -62,13 +68,16 @@ class Population(object):
 
         self.points[recipient].receive_task(task, sender)
 
+
     def set_connections(self):
         self.connectivity_matrix = get_connectivity_matrix(self.points)
         for index, point in enumerate(self.points):
             point.set_adjacencies(self.connectivity_matrix[index])
 
+
     def display(self):
         display(self.points, self.connectivity_matrix, show=self.show)
+
 
     def initiate_task(self, fixed_pair=None):
         start, end = ([-1, -1] if not fixed_pair else fixed_pair)
@@ -80,6 +89,7 @@ class Population(object):
         task = Task(end, message)
         self.pass_message(start, task, len(self.points))
 
+
     def clear(self):
         for point in self.points:
             # point.adjacencies = list(set(point.adjacencies))
@@ -89,7 +99,10 @@ class Population(object):
                 print(point.adjacencies, set(point.adjacencies))
             point.sent = []
 
+
+
 class Task(object):
+
     def __init__(self, target, message):
         self.target = target
         self.message = message
@@ -97,8 +110,10 @@ class Task(object):
         self.value = 100
 
 
+
 class Entity(object):
     """An entity in our world"""
+
     def __init__(self, population, index, x, y, cluster):
         self.x = x
         self.y = y
@@ -109,7 +124,8 @@ class Entity(object):
         self.task_attempt_map = defaultdict(lambda: [index])
         self.sent = []
         self.value = 0
-    
+
+
     def receive_task(self, task, sender):
         if sender not in self.task_attempt_map[task.id]:
             self.task_attempt_map[task.id].append(sender)
@@ -125,8 +141,10 @@ class Entity(object):
         else:
             self.pass_message(task, sender)
 
+
     def compare(self, other):
         pass
+
 
     def pass_message(self, task, sender):
         next_recipient = task.target if task.target in self.adjacencies else self.index
@@ -136,6 +154,7 @@ class Entity(object):
         print "passing message from %s to %s" % (self.index, next_recipient)
         self.sent.append(next_recipient)
         self.population.pass_message(next_recipient, task, self.index)
+
 
     def set_adjacencies(self, connectivity_vector):
         for connect_ix, connected in enumerate(connectivity_vector):
@@ -156,6 +175,8 @@ class Entity(object):
                 # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
         self.value = 0
         self.sent = []
+
+
 
 def make_points(cluster, size):
     ys = y_pos_dist.rvs(size)
@@ -182,7 +203,7 @@ def display(points, connectivity_matrix=None, current_ix=None, target_ix=None, s
     for cluster, color in cluster_colors.iteritems():
         class_points = [x for x in points if x.cluster == cluster]
         plt.scatter([p.x for p in class_points], [p.y for p in class_points], c=color, s=35)
-    
+
     if connectivity_matrix is not None:
         for start_ix, connections in enumerate(connectivity_matrix):
             for connect_ix, connected in enumerate(connections):
@@ -201,7 +222,7 @@ def display(points, connectivity_matrix=None, current_ix=None, target_ix=None, s
 def get_connectivity_matrix(points):
     points_arr = np.array([[p.x, p.y] for p in points])
     min_nonzero = lambda r: min(r[r > 0])
-    distance_mat = euclidean_distances(points_arr, points_arr) 
+    distance_mat = euclidean_distances(points_arr, points_arr)
     min_neighbor_distances = np.apply_along_axis(min_nonzero, axis=1, arr=distance_mat)
     neighbor_cutoff = np.mean(min_neighbor_distances) * 2.2
     connectivity_matrix = distance_mat < neighbor_cutoff
@@ -211,6 +232,8 @@ def get_connectivity_matrix(points):
 def run():
     pop = make_population()
     pop.initiate_task()
+
+
 
 if __name__ == '__main__':
     run()
