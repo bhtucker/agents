@@ -20,9 +20,9 @@ from collections import defaultdict
 y_pos_dist = norm(100, 10)
 
 cluster_x_dists = {
-    'A': uniform(0, 10),
-    'B': uniform(30, 10),
-    'C': uniform(60, 10)
+    'A': uniform(0, 50),
+    'B': uniform(30, 50),
+    'C': uniform(60, 50)
 }
 
 cluster_sizes = {
