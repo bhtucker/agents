@@ -42,12 +42,19 @@ cluster_colors = {
 class Population(object):
     """A set of connected Entities. Handles message passing and displaying."""
 
-    def __init__(self):
+    def __init__(self, debug=True):
         self.points = []
         self.path = []
         self.show = True
+        self.debug = debug
         self.success_lens = []
         self.connectivity_matrix = None
+
+
+    def log(self, msg):
+        """Prints a message to stdout, only if self.debug=True."""
+        if self.debug:
+            print(msg)
 
 
     def pass_message(self, recipient, task, sender):
@@ -157,13 +164,13 @@ class Population(object):
         start, end = [-1, -1] if not fixed_pair else fixed_pair
 
         if fixed_pair and start == end:
-            print("changing fixed pair: they're the same!")
+            self.log("changing fixed pair: they're the same!")
 
         while start == end:
             [start, end] = np.random.randint(len(self.points), size=2).tolist()
 
-        print('new task created')
-        print('starting at %s and aiming for %s' % (start, end))
+        self.log('new task created')
+        self.log('starting at %s and aiming for %s' % (start, end))
 
         task = Task(end)
         self.pass_message(start, task, None)
@@ -178,8 +185,8 @@ class Population(object):
         for point in self.points:
             adjs = point.adjacencies, set(point.adjacencies)
             if len(adjs[0]) != len(adjs[1]):
-                print("clearing %s" % point.index + '---' * 20)
-                print(point.adjacencies, set(point.adjacencies))
+                self.log("clearing %s" % point.index + '---' * 20)
+                self.log(str(point.adjacencies) + ", " + str(set(point.adjacencies)))
             point.sent = []
 
 
@@ -215,6 +222,10 @@ class Entity(object):
         self.task_attempt_map = defaultdict(lambda: [index])
 
 
+    def log(self, msg):
+        self.population.log(msg)
+
+
     def receive_task(self, task, sender):
         """
         Handles a message received. Calls pass_message(). Use
@@ -222,26 +233,26 @@ class Entity(object):
         message.
         """
 
-        print("%d: past receipients are " % (self.index,) + str(self.sent))
+        self.log("%d: past receipients are " % (self.index,) + str(self.sent))
 
         if sender:
             if sender not in self.task_attempt_map[task.id]:
                 self.task_attempt_map[task.id].append(sender)
 
             if sender in self.sent:
-                print('popping %s' % self.sent.pop(self.sent.index(sender)))
+                self.log('popping %s' % self.sent.pop(self.sent.index(sender)))
 
         # If I have passed the message to all of my neighbors and I still
         # received it back, bail out.
         if set(self.adjacencies).issubset(set(self.task_attempt_map[task.id])):
             # FIXME: this catches cycles eventually, but also catches randomly
             # followed closed paths
-            print 'caught in a cycle! bailing!'
+            self.log('caught in a cycle! bailing!')
             self.population.clear()
             return
 
         if self.index == task.target:
-            print 'message delivered!'
+            self.log('message delivered!')
         else:
             self.pass_message(task, sender)
 
@@ -259,7 +270,7 @@ class Entity(object):
             next_recipient = choice(self.adjacencies)
 
         self.task_attempt_map[task.id].append(next_recipient)
-        print "%s -> %s" % (self.index, next_recipient)
+        self.log("%s -> %s" % (self.index, next_recipient))
 
         self.sent.append(next_recipient)
         self.population.pass_message(next_recipient, task, self.index)
@@ -284,10 +295,10 @@ class Entity(object):
         """
 
         self.value += value
-        print("")
-        print("awarding %.2f to %d" % (self.value, self.index))
-        print("Map: " + str(dict(self.task_attempt_map)))
-        print("Adj before: " + str(self.adjacencies))
+        self.log("")
+        self.log("awarding %.2f to %d" % (self.value, self.index))
+        self.log("Map: " + str(dict(self.task_attempt_map)))
+        self.log("Adj before: " + str(self.adjacencies))
 
         self.learn()
 
@@ -313,18 +324,18 @@ class Entity(object):
         # when we choose uniformly from this list, we will be more
         # likely to choose 2 again.
 
-        # print("learning on %d" % self.index)
+        # self.log("learning on %d" % self.index)
 
         for adj in self.sent:
             assert adj in self.adjacencies
 
             u_val = uniform.rvs(0, 100, 1)
-            # print("u_val is %d, learn? %r" % (u_val, u_val < self.value))
+            # self.log("u_val is %d, learn? %r" % (u_val, u_val < self.value))
             if u_val < self.value:
                 self.adjacencies.append(adj)
                 # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
 
-        print("Adj after:  " + str(self.adjacencies))
+        self.log("Adj after:  " + str(self.adjacencies))
 
 
 

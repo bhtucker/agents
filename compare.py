@@ -37,6 +37,7 @@ if __name__ == "__main__":
     def run_cluster_size(sizes, iters=50):
         pop = abm.make_population(y_pos_dist, cluster_x_dists, sizes)
         pop.show = False
+        pop.debug = False
         pair = [0, 10]
 
         for i in range(iters):
