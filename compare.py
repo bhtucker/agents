@@ -63,7 +63,7 @@ if __name__ == "__main__":
             "of the message lie in the same cluster.")
     sizes = {'A': 10, 'B': 10,'C': 10}
     iters = 100
-    pair = [0, 10]
+    pair = [0, 9]
     start = time.time()
     lens = run_cluster_size(sizes, pair, iters)
     end = time.time()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             "in the giant cluster.")
     sizes = {'A': 100, 'B': 10,'C': 10}
     iters = 100
-    pair = [0, 10]
+    pair = [0, 20]
     start = time.time()
     lens = run_cluster_size(sizes, pair, iters)
     end = time.time()
@@ -87,7 +87,7 @@ if __name__ == "__main__":
             "while the target lives in one of the small ones.")
     sizes = {'A': 100, 'B': 10,'C': 10}
     iters = 100
-    pair = [0, 110]
+    pair = [0, 108]
     start = time.time()
     lens = run_cluster_size(sizes, pair, iters)
     end = time.time()
