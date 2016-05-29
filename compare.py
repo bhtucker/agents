@@ -16,21 +16,20 @@ import time
 
 def log_simulation(desc, sizes, iters, pair, lens, start, end):
     print(desc)
-    print("-" * 70)
     print("The clusters %r passed the same message %d times." % (sizes, iters))
     print("The message went from %d to %d" % tuple(pair))
     print("%d messages were successul." % len(lens))
-    print("It took %.2f +- %.2f steps (avg +- std)" % (np.average(lens), np.std(lens)))
-    print(lens)
+    if len(lens) > 0:
+        print("It took %.2f +- %.2f steps (avg +- std)" % (np.average(lens), np.std(lens)))
+        print(lens)
     print("This simulation took %.4f seconds." % (end-start))
     print("-" * 70)
-    print("")
 
 
 
 if __name__ == "__main__":
 
-    # initial parameters
+    # Initial parameters
 
     y_pos_dist = norm(300, 10)
 
@@ -63,7 +62,7 @@ if __name__ == "__main__":
     desc = ("Basic simulation with small clusters. The source and target\n"
             "of the message lie in the same cluster.")
     sizes = {'A': 10, 'B': 10,'C': 10}
-    iters = 50
+    iters = 100
     pair = [0, 10]
     start = time.time()
     lens = run_cluster_size(sizes, pair, iters)
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     desc = ("One giant cluster. The source and target of the message both lie\n"
             "in the giant cluster.")
     sizes = {'A': 100, 'B': 10,'C': 10}
-    iters = 50
+    iters = 100
     pair = [0, 10]
     start = time.time()
     lens = run_cluster_size(sizes, pair, iters)
@@ -87,7 +86,7 @@ if __name__ == "__main__":
     desc = ("One giant cluster. The source lies within the big cluster, \n"
             "while the target lives in one of the small ones.")
     sizes = {'A': 100, 'B': 10,'C': 10}
-    iters = 50
+    iters = 100
     pair = [0, 110]
     start = time.time()
     lens = run_cluster_size(sizes, pair, iters)
