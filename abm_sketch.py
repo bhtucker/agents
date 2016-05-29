@@ -11,7 +11,7 @@ from scipy.stats.distributions import uniform
 from sklearn.metrics.pairwise import euclidean_distances
 from matplotlib.pylab import plt
 import numpy as np
-from random import choice
+from numpy.random import choice
 from uuid import uuid4
 from collections import defaultdict
 
@@ -20,9 +20,9 @@ from collections import defaultdict
 y_pos_dist = norm(300, 10)
 
 cluster_x_dists = {
-    'A': uniform(0, 40),
-    'B': uniform(20, 60),
-    'C': uniform(40, 80)
+    'A': uniform(0, 50),
+    'B': uniform(30, 50),
+    'C': uniform(60, 50)
 }
 
 cluster_sizes = {
