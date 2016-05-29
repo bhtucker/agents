@@ -40,7 +40,10 @@ cluster_colors = {
 
 
 class Population(object):
-    """A set of connected Entities. Handles message passing and displaying."""
+    """
+    A set of connected Entities. Handles message passing and displaying. Entities are
+    connected randomly.
+    """
 
     def __init__(self):
         self.points = []
@@ -88,7 +91,7 @@ class Population(object):
         self.make_connectivity_matrix()
         for index, point in enumerate(self.points):
             point.set_adjacencies(self.connectivity_matrix[index])
-            
+
         n = float(len(self.points))
         k = float(np.sum(self.connectivity_matrix)) / 2
         self.edge_density = k / (n*(n-1)/2)
@@ -103,33 +106,12 @@ class Population(object):
         if self.connectivity_matrix:
             return
 
-        def decide_connection(point1, point2):
-            # A point is connected to another point of its same cluster
-            # with high probability proportional to alpha, and to
-            # another point of a different clluester with probability
-            # proportional to 1 - alpha.
-            # Moreover, the edge density of a network is capped at a value
-            # beta. That's why we choose a 0 with probability 1-beta,
-            # and partition beta into alpha and 1-alpha.
-
-            alpha = 0.8
-            beta  = 0.4
-
-            if point1.cluster == point2.cluster:
-                tie = choice([0, 0, 1], p=[1-beta, beta * (1-alpha), beta * alpha])
-            else:
-                tie = choice([0, 0, 1], p=[1-beta, beta * alpha, beta * (1-alpha)])
-            return tie
-
-        matrix = np.array([[0] * len(self.points) for _ in range(len(self.points))])
-
-        # since the graph is undirected, the matrix is symmetric,
-        # which in turn means we need only compute the lower triangular
-        # elements and then copy them into the upper triangular elements
-        for i, point1 in enumerate(self.points):
-            for j, point2 in enumerate(self.points[:i]):
-                matrix[i][j] = decide_connection(point1, point2)
-                matrix[j][i] = matrix[i][j]
+        # generate a random symmetric matrix
+        point_count = len(self.points)
+        matrix = np.array([np.random.randint(0, 2, point_count) for _ in range(point_count)])
+        matrix = (matrix + matrix.T) / 2
+        for i in range(point_count):
+            matrix[i][i] = 0
 
         self.connectivity_matrix = matrix
 
@@ -198,6 +180,98 @@ class Population(object):
                 print("clearing %s" % point.index + '---' * 20)
                 print(point.adjacencies, set(point.adjacencies))
             point.sent = []
+
+
+class CappedPreferentialPopulation(Population):
+    """
+    A set of connected Entities. Handles message passing and displaying. Connections are laid
+    out such that entities of the same cluster are more likely to be tied together,
+    proportionally to a parameter alpha. The overall density of the network is controlled
+    by a parameter beta.
+    """
+
+    def __init__(self, alpha=0.8, beta=0.4):
+        super(CappedPreferentialPopulation, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+
+
+    def make_connectivity_matrix(self):
+        """
+        Computes the connectivity matrix of this Population. Each point is
+        connected to each other within a radius.
+        """
+
+        if self.connectivity_matrix:
+            return
+
+        def decide_connection(point1, point2):
+            # A point is connected to another point of its same cluster
+            # with high probability proportional to alpha, and to
+            # another point of a different clluester with probability
+            # proportional to 1 - alpha.
+            # Moreover, the edge density of a network is capped at a value
+            # beta. That's why we choose a 0 with probability 1-beta,
+            # and partition beta into alpha and 1-alpha.
+
+            alpha = self.alpha
+            beta  = self.beta
+
+            if point1.cluster == point2.cluster:
+                tie = choice([0, 0, 1], p=[1-beta, beta * (1-alpha), beta * alpha])
+            else:
+                tie = choice([0, 0, 1], p=[1-beta, beta * alpha, beta * (1-alpha)])
+            return tie
+
+        matrix = np.array([[0] * len(self.points) for _ in range(len(self.points))])
+
+        # since the graph is undirected, the matrix is symmetric,
+        # which in turn means we need only compute the lower triangular
+        # elements and then copy them into the upper triangular elements
+        for i, point1 in enumerate(self.points):
+            for j, point2 in enumerate(self.points[:i]):
+                matrix[i][j] = decide_connection(point1, point2)
+                matrix[j][i] = matrix[i][j]
+
+        self.connectivity_matrix = matrix
+
+
+
+class NearestNeighborsPopulation(Population):
+    """
+    A set of connected Entities. Handles message passing and displaying. Connections laid
+    out geographically: each point is connected to some of its nearest neighbors.
+    """
+
+    def __init__(self):
+        super(NearestNeighborsPopulation, self).__init__()
+
+
+    def make_connectivity_matrix(self):
+        """
+        Computes the connectivity matrix of this Population. Each point is
+        connected to each other within a radius.
+        """
+
+        if self.connectivity_matrix:
+            return
+
+        points_arr = np.array([[p.x, p.y] for p in self.points])
+        distance_mat = euclidean_distances(points_arr, points_arr)
+
+        # Every point p will be connected to each other point whose distance
+        # to p is less than a cut-off value. This value is computed as the
+        # mean of {min_nonzero(dist_mat(p)) | p is a point}, times a factor
+        min_nonzero = lambda r: min(r[r > 0])
+
+        # apply_along_axis(f, axis=1, arr) applies f to each row
+        min_neighbor_distances = np.apply_along_axis(min_nonzero, axis=1, arr=distance_mat)
+
+        factor = 2.2
+        neighbor_cutoff = np.mean(min_neighbor_distances) * factor
+        connectivity_matrix = distance_mat < neighbor_cutoff
+
+        self.connectivity_matrix = connectivity_matrix
 
 
 
@@ -353,14 +427,14 @@ def make_points(cluster, size, y_dist, x_dist):
     return list(zip(xs, ys, [cluster] * size))
 
 
-def make_population(y_pos_dist, cluster_x_dists, cluster_sizes):
+def make_population(y_pos_dist, cluster_x_dists, cluster_sizes, pop_class=Population):
     """Creates a Population and sets its connections. Uses make_points."""
 
     points = []
     for cluster, size in cluster_sizes.iteritems():
         points += make_points(cluster, size, y_pos_dist, cluster_x_dists[cluster])
 
-    population = Population()
+    population = pop_class()
     for ix, point in enumerate(points):
         pt = Entity(population, ix, *point)
         population.points.append(pt)
@@ -372,7 +446,7 @@ def make_population(y_pos_dist, cluster_x_dists, cluster_sizes):
 def run(y_pos_dist, cluster_x_dists, cluster_sizes):
     """Creates and sets up a Population and runs initiate_task()."""
 
-    pop = make_population(y_pos_dist, cluster_x_dists, cluster_sizes)
+    pop = make_population(y_pos_dist, cluster_x_dists, cluster_sizes, Population)
     pop.show = False
     pop.initiate_task()
 
