@@ -88,6 +88,10 @@ class Population(object):
         self.make_connectivity_matrix()
         for index, point in enumerate(self.points):
             point.set_adjacencies(self.connectivity_matrix[index])
+            
+        n = float(len(self.points))
+        k = float(np.sum(self.connectivity_matrix)) / 2
+        self.edge_density = k / (n*(n-1)/2)
 
 
     def make_connectivity_matrix(self):
@@ -99,22 +103,35 @@ class Population(object):
         if self.connectivity_matrix:
             return
 
-        points_arr = np.array([[p.x, p.y] for p in self.points])
-        distance_mat = euclidean_distances(points_arr, points_arr)
+        def decide_connection(point1, point2):
+            # A point is connected to another point of its same cluster
+            # with high probability proportional to alpha, and to
+            # another point of a different clluester with probability
+            # proportional to 1 - alpha.
+            # Moreover, the edge density of a network is capped at a value
+            # beta. That's why we choose a 0 with probability 1-beta,
+            # and partition beta into alpha and 1-alpha.
 
-        # Every point p will be connected to each other point whose distance
-        # to p is less than a cut-off value. This value is computed as the
-        # mean of {min_nonzero(dist_mat(p)) | p is a point}, times a factor
-        min_nonzero = lambda r: min(r[r > 0])
+            alpha = 0.8
+            beta  = 0.4
 
-        # apply_along_axis(f, axis=1, arr) applies f to each row
-        min_neighbor_distances = np.apply_along_axis(min_nonzero, axis=1, arr=distance_mat)
+            if point1.cluster == point2.cluster:
+                tie = choice([0, 0, 1], p=[1-beta, beta * (1-alpha), beta * alpha])
+            else:
+                tie = choice([0, 0, 1], p=[1-beta, beta * alpha, beta * (1-alpha)])
+            return tie
 
-        factor = 2.2
-        neighbor_cutoff = np.mean(min_neighbor_distances) * factor
-        connectivity_matrix = distance_mat < neighbor_cutoff
+        matrix = np.array([[0] * len(self.points) for _ in range(len(self.points))])
 
-        self.connectivity_matrix = connectivity_matrix
+        # since the graph is undirected, the matrix is symmetric,
+        # which in turn means we need only compute the lower triangular
+        # elements and then copy them into the upper triangular elements
+        for i, point1 in enumerate(self.points):
+            for j, point2 in enumerate(self.points[:i]):
+                matrix[i][j] = decide_connection(point1, point2)
+                matrix[j][i] = matrix[i][j]
+
+        self.connectivity_matrix = matrix
 
 
     def display(self, current=None, target=None):
