@@ -17,7 +17,7 @@ from collections import defaultdict
 
 
 
-y_pos_dist = norm(100, 10)
+y_pos_dist = norm(300, 10)
 
 cluster_x_dists = {
     'A': uniform(0, 50),
@@ -26,9 +26,9 @@ cluster_x_dists = {
 }
 
 cluster_sizes = {
-    'A': 10,
+    'A': 8,
     'B': 10,
-    'C': 10
+    'C': 8
 }
 
 cluster_colors = {
