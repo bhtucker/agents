@@ -6,12 +6,11 @@
     Comparing performance of different cluster sizes in abm_sketch
 """
 
-import abm_sketch as abm
+from abm.pops import NearestNeighborsPopulation
 import numpy as np
 from scipy.stats.distributions import norm
 from scipy.stats.distributions import uniform
 import time
-
 
 
 def log_simulation(desc, sizes, iters, pair, lens, start, end):
@@ -49,7 +48,7 @@ if __name__ == "__main__":
     # Compare how cluster sizes affects learning.
 
     def run_cluster_size(sizes, pair, iters):
-        pop = abm.make_population(y_pos_dist, cluster_x_dists, sizes)
+        pop = NearestNeighborsPopulation(y_pos_dist, cluster_x_dists, sizes)
         pop.show = False
         pop.debug = False
 

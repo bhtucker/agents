@@ -57,7 +57,7 @@ class Entity(object):
         if set(self.adjacencies).issubset(set(self.task_attempt_map[task.id])):
             # FIXME: this catches cycles eventually, but also catches randomly
             # followed closed paths
-            self.log('caught in a cycle! bailing!')
+            self.log('I have passed the message to all of my neighbors, so I quit')
             self.population.clear()
             return
 

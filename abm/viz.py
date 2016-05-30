@@ -9,7 +9,8 @@
 from matplotlib.pylab import plt
 from abm import CLUSTER_COLORS
 
-def display(pts, connectivity_matrix, current=None, target=None):
+
+def display_network(pts, connectivity_matrix, current=None, target=None):
 
     # Scatter plot of points, color coded by class
     size = 35

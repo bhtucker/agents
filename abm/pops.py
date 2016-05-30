@@ -43,13 +43,16 @@ class Population(object):
     connected randomly.
     """
 
-    def __init__(self, debug=True):
+    def __init__(self, y_pos_dist, cluster_x_dists, cluster_sizes, debug=True):
         self.points = []
         self.path = []
         self.show = True
         self.debug = debug
         self.success_lens = []
         self.connectivity_matrix = None
+        self._set_entities(y_pos_dist, cluster_x_dists, cluster_sizes)
+        self._set_connectivity_matrix()
+        self._set_connections()
 
 
     def log(self, msg):
@@ -116,7 +119,7 @@ class Population(object):
         connected to each other within a radius.
         """
 
-        if self.connectivity_matrix:
+        if self.connectivity_matrix is not None:
             return
 
         # generate a random symmetric matrix
@@ -180,8 +183,8 @@ class CappedPreferentialPopulation(Population):
     by a parameter beta.
     """
 
-    def __init__(self, alpha=0.8, beta=0.4):
-        super(CappedPreferentialPopulation, self).__init__()
+    def __init__(self, alpha=0.8, beta=0.4, *args, **kwargs):
+        super(CappedPreferentialPopulation, self).__init__(*args, **kwargs)
         self.alpha = alpha
         self.beta = beta
 
@@ -192,7 +195,7 @@ class CappedPreferentialPopulation(Population):
         connected to each other within a radius.
         """
 
-        if self.connectivity_matrix:
+        if self.connectivity_matrix is not None:
             return
 
         def decide_connection(point1, point2):
@@ -233,17 +236,13 @@ class NearestNeighborsPopulation(Population):
     out geographically: each point is connected to some of its nearest neighbors.
     """
 
-    def __init__(self):
-        super(NearestNeighborsPopulation, self).__init__()
-
-
     def _set_connectivity_matrix(self):
         """
         Computes the connectivity matrix of this Population. Each point is
         connected to each other within a radius.
         """
 
-        if self.connectivity_matrix:
+        if self.connectivity_matrix is not None:
             return
 
         points_arr = np.array([[p.x, p.y] for p in self.points])
