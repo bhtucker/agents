@@ -86,16 +86,12 @@ class Entity(object):
         self.population.pass_message(next_recipient, task, self.index)
 
 
-    def set_adjacencies(self, connectivity_vector):
+    def set_adjacencies(self, adjacencies):
         """
-        Builds the adjacency list for this Entity. <connectivity_vector>
-        is a row from an adjacency matrix.
+        Builds the adjacency list for this Entity. 
+        :param adjacencies: set of integers referencing other entities in self.population
         """
-
-        for connect_ix, connected in enumerate(connectivity_vector):
-            if connected and connect_ix != self.index:
-                self.adjacencies.append(connect_ix)
-
+        self.adjacencies = list(adjacencies)
 
     def award(self, value):
         """

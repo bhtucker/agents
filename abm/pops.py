@@ -11,18 +11,17 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 from abm.viz import display_network
 from abm.entities import Entity, Task
-from random import choice
 import numpy as np
 
-y_pos_dist = norm(300, 10)
+Y_DIST = norm(300, 10)
 
-cluster_x_dists = {
+CLUSTER_X_DIST_MAP = {
     'A': uniform(0, 50),
     'B': uniform(30, 50),
     'C': uniform(60, 50)
 }
 
-cluster_sizes = {
+CLUSTER_SIZES = {
     'A': 8,
     'B': 10,
     'C': 8
@@ -43,13 +42,18 @@ class Population(object):
     connected randomly.
     """
 
-    def __init__(self, y_pos_dist, cluster_x_dists, cluster_sizes, debug=True):
+    def __init__(self, y_pos_dist=Y_DIST, cluster_x_dists=CLUSTER_X_DIST_MAP,
+                 cluster_sizes=CLUSTER_SIZES, debug=True):
         self.points = []
         self.path = []
         self.show = True
         self.debug = debug
         self.success_lens = []
         self.connectivity_matrix = None
+        self.connected_components = []
+        self.node_component_map = {}
+
+
         self._set_entities(y_pos_dist, cluster_x_dists, cluster_sizes)
         self._set_connectivity_matrix()
         self._set_connections()
@@ -101,16 +105,48 @@ class Population(object):
             self.points.append(pt)
 
 
-    def _set_connections(self):
-        """Initializes each Entity's adjacency list."""
+    def _set_connections(self, track_components=True):
+        """Initializes each Entity's adjacency list.
+        :param track_components: Flag for tracking connected components during graph construction
+        """
 
         self._set_connectivity_matrix()
         for index, point in enumerate(self.points):
-            point.set_adjacencies(self.connectivity_matrix[index])
+
+            # make set of connections to indices; np.where returns a tuple
+            adjacencies = set(np.where(self.connectivity_matrix[index] > 0)[0])
+            adjacencies.discard(index)
+
+            # pass adjacency information down to agent
+            point.set_adjacencies(adjacencies)
+
+            if track_components:
+                # track connected components as we construct edges
+                if index in self.node_component_map:
+                    component = self.node_component_map[index]
+                else:
+                    component = set()
+                    self.node_component_map[index] = component
+                    self.connected_components.append(component)
+                # update the component in place with potential new members
+                component.update(adjacencies)
+
+                # update the node - component map so we can fetch this object for adjacencies
+                self.node_component_map.update({a: component for a in adjacencies})
+
+                # resolve potential component connections
+                resolved_components = [component]
+                for other_component in self.connected_components:
+                    if other_component.intersection(component) or other_component is component:
+                        component.update(other_component)
+                        self.node_component_map.update({a: component for a in other_component})
+                    else:
+                        resolved_components.append(other_component)
+                self.connected_components = resolved_components
 
         n = float(len(self.points))
         k = float(np.sum(self.connectivity_matrix)) / 2
-        self.edge_density = k / (n*(n-1)/2)
+        self.edge_density = k / (n * (n - 1) / 2)
 
 
     def _set_connectivity_matrix(self):
@@ -184,9 +220,9 @@ class CappedPreferentialPopulation(Population):
     """
 
     def __init__(self, alpha=0.8, beta=0.4, *args, **kwargs):
-        super(CappedPreferentialPopulation, self).__init__(*args, **kwargs)
         self.alpha = alpha
         self.beta = beta
+        super(CappedPreferentialPopulation, self).__init__(*args, **kwargs)
 
 
     def _set_connectivity_matrix(self):
@@ -211,9 +247,9 @@ class CappedPreferentialPopulation(Population):
             beta  = self.beta
 
             if point1.cluster == point2.cluster:
-                tie = choice([0, 0, 1], p=[1-beta, beta * (1-alpha), beta * alpha])
+                tie = np.random.choice([0, 0, 1], p=[1-beta, beta * (1-alpha), beta * alpha])
             else:
-                tie = choice([0, 0, 1], p=[1-beta, beta * alpha, beta * (1-alpha)])
+                tie = np.random.choice([0, 0, 1], p=[1-beta, beta * alpha, beta * (1-alpha)])
             return tie
 
         matrix = np.array([[0] * len(self.points) for _ in range(len(self.points))])
