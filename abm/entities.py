@@ -29,14 +29,10 @@ class Entity(object):
 
         # task_attempt_map[task_id] hold a list of the neighbors to whom
         # this entity gave the task
-        self.task_attempt_map = defaultdict(self.default)
-
-    def default(self):
-        return [self.index]
+        self.task_attempt_map = defaultdict(lambda: [self.index])
 
     def log(self, msg):
         self.population.log(msg)
-
 
     def receive_task(self, task, sender):
         """
@@ -87,7 +83,6 @@ class Entity(object):
         self.sent.append(next_recipient)
         self.population.pass_message(next_recipient, task, self.index)
 
-
     def set_adjacencies(self, adjacencies):
         """
         Builds the adjacency list for this Entity. 
@@ -103,16 +98,15 @@ class Entity(object):
         """
 
         self.value += value
-        self.log("")
-        self.log("awarding %.2f to %d" % (self.value, self.index))
-        self.log("Map: " + str(dict(self.task_attempt_map)))
-        self.log("Adj before: " + str(self.adjacencies))
+        self.log("""
+            Awarding {value} to {index}
+            Sent nodes: {sent}
+            """.format(value=value, index=self.index, sent=self.sent))
 
         self.learn()
 
         self.value = 0
         self.sent = []
-
 
     def learn(self):
         """Learns about the world after receiving an award."""
@@ -141,7 +135,6 @@ class Entity(object):
             # self.log("u_val is %d, learn? %r" % (u_val, u_val < self.value))
             if u_val < self.value:
                 self.adjacencies.append(adj)
-                # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
 
         self.log("Adj after:  " + str(self.adjacencies))
 
