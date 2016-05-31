@@ -45,7 +45,7 @@ class Population(object):
     """
 
     def __init__(self, y_pos_dist=Y_DIST, cluster_x_dists=CLUSTER_X_DIST_MAP,
-                 cluster_sizes=CLUSTER_SIZES, single_component=True, debug=True):
+                 cluster_sizes=CLUSTER_SIZES, track_components=False, single_component=True, debug=True):
         self.points = []
         self.path = []
         self.show = True
@@ -57,7 +57,7 @@ class Population(object):
 
         self._set_entities(y_pos_dist, cluster_x_dists, cluster_sizes)
         self._set_connectivity_matrix()
-        self._set_connections()
+        self._set_connections(track_components=track_components or single_component)
         if single_component:
             self._ensure_single_component()
 
@@ -313,7 +313,7 @@ class NearestNeighborsPopulation(Population):
         # Every point p will be connected to each other point whose distance
         # to p is less than a cut-off value. This value is computed as the
         # mean of {min_nonzero(dist_mat(p)) | p is a point}, times a factor
-        min_nonzero = lambda r: min(r[r > 0])
+        min_nonzero = lambda r: min(r[r > 0])  # noqa
 
         # apply_along_axis(f, axis=1, arr) applies f to each row
         min_neighbor_distances = np.apply_along_axis(

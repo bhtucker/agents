@@ -29,8 +29,10 @@ class Entity(object):
 
         # task_attempt_map[task_id] hold a list of the neighbors to whom
         # this entity gave the task
-        self.task_attempt_map = defaultdict(lambda: [index])
+        self.task_attempt_map = defaultdict(self.default)
 
+    def default(self):
+        return [self.index]
 
     def log(self, msg):
         self.population.log(msg)
