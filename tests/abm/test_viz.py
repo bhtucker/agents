@@ -2,14 +2,18 @@
 """
     test_viz
     ~~~~~~~~
- 
+
     test display
 """
 import pytest
-import matplotlib.pyplot as plt
 
-from abm import viz, pops
+from abm import viz
 
-@pytest.mark.mpl_image_compare(tolerance=20)
+@pytest.mark.mpl_image_compare(tolerance=5)
 def test_display(nnpop):
     return viz.construct_network(nnpop.points, nnpop.connectivity_matrix)
+
+
+@pytest.mark.mpl_image_compare(tolerance=5)
+def test_display_pair(nnpop):
+    return viz.construct_network(nnpop.points, nnpop.connectivity_matrix, 1, 4)
