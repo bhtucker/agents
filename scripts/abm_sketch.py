@@ -430,28 +430,28 @@ class Entity(object):
 
 
 
-def make_points(cluster, size, y_dist, x_dist):
-    """Creates a set of points using y_dist and x_dist to draw the location."""
+# def make_points(cluster, size, y_dist, x_dist):
+#     """Creates a set of points using y_dist and x_dist to draw the location."""
 
-    ys = y_dist.rvs(size)
-    xs = x_dist.rvs(size)
-    return list(zip(xs, ys, [cluster] * size))
+#     ys = y_dist.rvs(size)
+#     xs = x_dist.rvs(size)
+#     return list(zip(xs, ys, [cluster] * size))
 
 
-def make_population(y_pos_dist, cluster_x_dists, cluster_sizes, pop_class=Population):
-    """Creates a Population and sets its connections. Uses make_points."""
+# def make_population(y_pos_dist, cluster_x_dists, cluster_sizes, pop_class=Population):
+#     """Creates a Population and sets its connections. Uses make_points."""
 
-    points = []
-    for cluster, size in cluster_sizes.iteritems():
-        points += make_points(cluster, size, y_pos_dist, cluster_x_dists[cluster])
+#     points = []
+#     for cluster, size in cluster_sizes.iteritems():
+#         points += make_points(cluster, size, y_pos_dist, cluster_x_dists[cluster])
 
-    population = pop_class()
-    for ix, point in enumerate(points):
-        pt = Entity(population, ix, *point)
-        population.points.append(pt)
+#     population = pop_class()
+#     for ix, point in enumerate(points):
+#         pt = Entity(population, ix, *point)
+#         population.points.append(pt)
 
-    population.set_connections()
-    return population
+#     population.set_connections()
+#     return population
 
 
 def run(y_pos_dist, cluster_x_dists, cluster_sizes):
