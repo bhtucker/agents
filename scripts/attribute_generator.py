@@ -25,6 +25,6 @@ class AttributeGenerator(object):
         attr_data = self._attr_data[attribute]
         matched_value_index = np.searchsorted(attr_data['cumsum'], flip)
         if matched_value_index == len(attr_data['names']):
-            return None
+            return 'no value'
         return attr_data['names'][matched_value_index]
 
