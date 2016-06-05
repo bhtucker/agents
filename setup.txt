@@ -1,0 +1,7 @@
+Label Value Notes
+network_size;100
+seed;0
+density;0.1
+attributes;{ "color": {"blue": 40, "red": 35, "green": 25}, "region": {"east": 50, "west": 45} }
+edge_probs;{ "color": {"blue": 0.2, "red": 0.15, "green": 0.25, "diff": 0.1 }, "region": {"east": 0.2, "west": 0.2, "diff": 0.08} }
+output_path;/path/to/output/files
