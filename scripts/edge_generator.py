@@ -1,7 +1,7 @@
 from operator import mul
 from random import random
 
-class EdgeeGenerator(object):
+class EdgeGenerator(object):
     def __init__(self, attributes, initial_probs, scale, density):
         """
         Accepts a dictionary of {attribute: {value: k}},

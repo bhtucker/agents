@@ -11,6 +11,7 @@ class AttributeGenerator(object):
         """
         self.attributes = attributes
         self.scale = scale
+        self._attr_data = {}
         self._setup_attr_data()
 
     def _setup_attr_data(self):
