@@ -14,11 +14,8 @@ from scipy.stats.distributions import uniform
 class Entity(object):
     """An entity in our world"""
 
-    def __init__(self, population, index, x, y, cluster):
-        self.x = x
-        self.y = y
+    def __init__(self, population, index):
         self.index = index
-        self.cluster = cluster
         self.population = population
 
         self.sent = []    # list of points to whom I've passed the current message
@@ -31,10 +28,8 @@ class Entity(object):
         # this entity gave the task
         self.task_attempt_map = defaultdict(lambda: [index])
 
-
     def log(self, msg):
         self.population.log(msg)
-
 
     def receive_task(self, task, sender):
         """
@@ -66,7 +61,6 @@ class Entity(object):
         else:
             self.pass_message(task, sender)
 
-
     def pass_message(self, task, sender):
         """
         If this Entity knows the target, send the message directly.
@@ -84,7 +78,6 @@ class Entity(object):
 
         self.sent.append(next_recipient)
         self.population.pass_message(next_recipient, task, self.index)
-
 
     def set_adjacencies(self, adjacencies):
         """
@@ -110,7 +103,6 @@ class Entity(object):
 
         self.value = 0
         self.sent = []
-
 
     def learn(self):
         """Learns about the world after receiving an award."""
@@ -139,9 +131,37 @@ class Entity(object):
             # self.log("u_val is %d, learn? %r" % (u_val, u_val < self.value))
             if u_val < self.value:
                 self.adjacencies.append(adj)
-                # import ipdb ; ipdb.set_trace() #z()  # breakpoint f35d9e23 //
 
         self.log("Adj after:  " + str(self.adjacencies))
+
+
+class XyEntity(Entity):
+    """An entity in x-y world"""
+
+    def __init__(self, population, index, x, y, cluster):
+        super(XyEntity, self).__init__(population, index)
+        self.x = x
+        self.y = y
+        self.cluster = cluster
+
+
+class NxEntity(Entity):
+    """An entity that can be a Nx graph node
+    It can have more freeform attributes and doesn't need x, y positions for viz
+    """
+    def __init__(self, population, index, **kwargs):
+        super(NxEntity, self).__init__(population, index)
+        self.update(kwargs)
+
+    def update(self, kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def __getitem__(self, attr):
+        return getattr(self, attr)
+
+    # def __getitem__(self, attr):
+    #     return getattr(self, attr)
 
 
 class Task(object):

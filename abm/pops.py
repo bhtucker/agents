@@ -39,27 +39,11 @@ def make_points(cluster, size, y_dist, x_dist):
 
 
 class Population(object):
-    """
-    A set of connected Entities. Handles message passing and displaying.
-    Entities are connected randomly.
-    """
-
-    def __init__(self, y_pos_dist=Y_DIST, cluster_x_dists=CLUSTER_X_DIST_MAP,
-                 cluster_sizes=CLUSTER_SIZES, single_component=True, debug=True):
-        self.points = []
+    def __init__(self, debug=True):
         self.path = []
         self.show = True
         self.debug = debug
         self.success_lens = []
-        self.connectivity_matrix = None
-        self.connected_components = []
-        self.node_component_map = {}
-
-        self._set_entities(y_pos_dist, cluster_x_dists, cluster_sizes)
-        self._set_connectivity_matrix()
-        self._set_connections()
-        if single_component:
-            self._ensure_single_component()
 
     def log(self, msg):
         """Prints a message to stdout, only if self.debug=True."""
@@ -94,6 +78,56 @@ class Population(object):
         k = k = float(len(path))
         return (task.value / k) + ((k - path.index(entity)) * 5)
 
+    def initiate_task(self, fixed_pair=None):
+        """Initializes a task, and calls pass_message()."""
+
+        start, end = [-1, -1] if not fixed_pair else fixed_pair
+
+        if fixed_pair and start == end:
+            self.log("changing fixed pair: they're the same!")
+
+        while start == end:
+            [start, end] = np.random.randint(self.size, size=2).tolist()
+
+        self.log('new task created')
+        self.log('starting at %s and aiming for %s' % (start, end))
+
+        task = Task(end)
+        self.pass_message(start, task, None)
+
+    def clear(self):
+        """
+        Clear every Entity's history. Called when the package is stuck
+        in a cycle.
+        """
+        point_iterator = self.points if isinstance(self.points, list) else self.points.values()
+        for point in point_iterator:
+            point.sent = []
+
+
+class XyPopulation(Population):
+    """
+    A set of connected Entities. Handles message passing and displaying.
+    Entities are connected randomly.
+    """
+
+    def __init__(self, y_pos_dist=Y_DIST, cluster_x_dists=CLUSTER_X_DIST_MAP,
+                 cluster_sizes=CLUSTER_SIZES, single_component=True, debug=True):
+        self.points = []
+        self.path = []
+        self.show = True
+        self.debug = debug
+        self.success_lens = []
+        self.connectivity_matrix = None
+        self.connected_components = []
+        self.node_component_map = {}
+
+        self._set_entities(y_pos_dist, cluster_x_dists, cluster_sizes)
+        self._set_connectivity_matrix()
+        self._set_connections()
+        if single_component:
+            self._ensure_single_component()
+
     def _set_entities(self, y_pos_dist, cluster_x_dists, cluster_sizes):
         point_args = []
         for cluster, size in cluster_sizes.iteritems():
@@ -103,6 +137,7 @@ class Population(object):
         for ix, args in enumerate(point_args):
             pt = Entity(self, ix, *args)
             self.points.append(pt)
+        self.size = len(self.points)
 
     def _set_connections(self, track_components=True):
         """Initializes each Entity's adjacency list.
@@ -203,37 +238,6 @@ class Population(object):
 
         display_network(self.points, self.connectivity_matrix,
                         current=current, target=target)
-
-    def initiate_task(self, fixed_pair=None):
-        """Initializes a task, and calls pass_message()."""
-
-        start, end = [-1, -1] if not fixed_pair else fixed_pair
-
-        if fixed_pair and start == end:
-            self.log("changing fixed pair: they're the same!")
-
-        while start == end:
-            [start, end] = np.random.randint(len(self.points), size=2).tolist()
-
-        self.log('new task created')
-        self.log('starting at %s and aiming for %s' % (start, end))
-
-        task = Task(end)
-        self.pass_message(start, task, None)
-
-    def clear(self):
-        """
-        Clear every Entity's history. Called when the package is stuck
-        in a cycle.
-        """
-
-        for point in self.points:
-            adjs = point.adjacencies, set(point.adjacencies)
-            if len(adjs[0]) != len(adjs[1]):
-                self.log("clearing %s" % point.index + '---' * 20)
-                self.log(str(point.adjacencies) + ", " +
-                         str(set(point.adjacencies)))
-            point.sent = []
 
 
 class CappedPreferentialPopulation(Population):
