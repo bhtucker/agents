@@ -22,7 +22,12 @@ class Entity(object):
         self.value = 0    # value awarded for a successful message
 
         # extended adjacency list (see pass_message() and learn())
-        self.adjacencies = []
+        try:
+            self.adjacencies = []
+        except AttributeError as e_:
+            # subclasses may define adjacencies as a property, that's okay
+            if 'adjacencies' not in dir(self):
+                raise e_
 
         # task_attempt_map[task_id] hold a list of the neighbors to whom
         # this entity gave the task
@@ -160,8 +165,16 @@ class NxEntity(Entity):
     def __getitem__(self, attr):
         return getattr(self, attr)
 
+    @property
+    def adjacencies(self):
+        if self.population and self.population.graph:
+            return self.population.graph.neighbors(self.index)
+        else:
+            return []
+   
     # def __getitem__(self, attr):
     #     return getattr(self, attr)
+
 
 
 class Task(object):

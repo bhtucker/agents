@@ -134,11 +134,11 @@ class NxPopulation(pops.Population):
             node_attrs = {}
             for attribute in attributes:
                 value = attr_gen.get_value(attribute)
-                attributeSets[attribute][value].add(i + 1)
+                attributeSets[attribute][value].add(i)
                 attributeCounts[attribute][value] += 1
                 node_attrs[attribute] = value
             entity = entities.NxEntity(index=i, population=self, **node_attrs)
-            G.add_node(i + 1, entity)
+            G.add_node(i, entity)
 
         # iterate over dyads of nodes and set an edge between them if set_edge returns true
         for dyad in combinations(nx.nodes(G), 2):
@@ -151,5 +151,4 @@ class NxPopulation(pops.Population):
             return
         nx.draw_spring(self.graph)
         plt.show()
-
 
