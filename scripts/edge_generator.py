@@ -1,7 +1,7 @@
 from operator import mul
 from random import random
 
-class EdgeeGenerator(object):
+class EdgeGenerator(object):
     def __init__(self, attributes, initial_probs, scale, density):
         """
         Accepts a dictionary of {attribute: {value: k}},
@@ -16,6 +16,7 @@ class EdgeeGenerator(object):
         self.initial_probs = initial_probs
         self.scale = float(scale)
         self.density = density
+        self.density_adjuster = 1.0
         self._compute_adjuster()
 
     def _compute_adjuster(self):
@@ -23,11 +24,15 @@ class EdgeeGenerator(object):
         value_weights = {attr: {key: value/self.scale for key, value in values.items()}
             for attr,values in self.attributes.items()}
         for attr in value_weights:
-            p_no_val = 1.0 - sum(value_weights[attr].itervalues())
-            p_dyad_w_no_val_node = 2*p_no_val - p_no_val**2
-            p_dyad_w_matched_val = sum(self.initial_probs[attr][k]**2 for k in self.initial_probs[attr].keys() if k <> 'diff')
+            # p_no_val = 1.0 - sum(value_weights[attr].itervalues())
+            # p_dyad_w_no_val_node = 2*p_no_val - p_no_val**2
+            if 'no value' in value_weights[attr]:
+                p_dyad_w_no_val_node = 2*value_weights[attr]['no value'] - value_weights[attr]['no value']**2
+            else:
+                p_dyad_w_no_val_node = 0
+            p_dyad_w_matched_val = sum(value_weights[attr][k]**2 for k in value_weights[attr].keys() if k <> 'no value')
             p_dyad_wo_matched_val = 1.0 - p_dyad_w_matched_val - p_dyad_w_no_val_node
-            p_edge_matched = sum(value_weights[attr][k] * self.initial_probs[attr][k] for k in value_weights[attr].keys())
+            p_edge_matched = sum(value_weights[attr][k] * self.initial_probs[attr][k] for k in value_weights[attr].keys() if k <> 'no value')
             p_edge_wo_match = p_dyad_wo_matched_val * self.initial_probs[attr]['diff']
             p_edge_w_no_val_node = p_dyad_w_no_val_node * 0.5
             p_edge = p_edge_matched + p_edge_wo_match + p_edge_w_no_val_node
