@@ -32,7 +32,7 @@ class EdgeGenerator(object):
                 p_dyad_w_no_val_node = 0
             p_dyad_w_matched_val = sum(value_weights[attr][k]**2 for k in value_weights[attr].keys() if k <> 'no value')
             p_dyad_wo_matched_val = 1.0 - p_dyad_w_matched_val - p_dyad_w_no_val_node
-            p_edge_matched = sum(value_weights[attr][k] * self.initial_probs[attr][k] for k in value_weights[attr].keys() if k <> 'no value')
+            p_edge_matched = sum(value_weights[attr][k]**2 * self.initial_probs[attr][k] for k in value_weights[attr].keys() if k <> 'no value')
             p_edge_wo_match = p_dyad_wo_matched_val * self.initial_probs[attr]['diff']
             p_edge_w_no_val_node = p_dyad_w_no_val_node * 0.5
             p_edge = p_edge_matched + p_edge_wo_match + p_edge_w_no_val_node
