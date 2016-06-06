@@ -4,40 +4,43 @@ from datetime import datetime
 from os.path import expanduser, join
 from os import urandom
 from ast import literal_eval as lEval
+from itertools import combinations
 import networkx as nx
+from attribute_generator import AttributeGenerator
+from edge_generator import EdgeGenerator
 
 # read location of last file from command line and get location of setup file
 if len(argv) > 1 :
     lastLoc = argv[1]
 else:
-    lastLoc = join(expanduser('~'), '/projects/RCAgents/.runSetup.txt')
+    lastLoc = join(expanduser('~'), 'projects/RCAgents/.runSetup.txt')
 try:
     with open(lastLoc, 'rU') as lastfp :
-    setupLoc = lastfp.read().strip()
+        setupLoc = lastfp.read().strip()
 except IOError :
     setupLoc = raw_input('\nPlease enter the complete path to the setup file: ')
 else:
     print '\nThe location for the setup file is: ' + setupLoc + '\n\n'
     resp = raw_input('If this is correct, enter "y"; if it is not, enter "n": ').lower()
     while resp != 'y' and resp != 'n' :
-    resp = raw_input('\nPlease enter "y" or "n" to continue: ').lower()
+        resp = raw_input('\nPlease enter "y" or "n" to continue: ').lower()
     if resp == 'n' :
-    setupLoc = raw_input('\nPlease enter the complete path to the setup file: ')
+        setupLoc = raw_input('\nPlease enter the complete path to the setup file: ')
 
 # read in setup file and write setup location out for next run
 try:
     with open(setupLoc, 'rU') as setupfp :
-    setup_tmp = [entry.strip() for entry in setupfp.readlines()]
+        setup_tmp = [entry.strip() for entry in setupfp.readlines()]
 except IOError:
     print '\nCould not open setup file:\n\n\t' + setupLoc \
     + '\n\nThe program has halted.\n\n'
     exit(1)
 try:
     with open(lastLoc, 'r+') as lastfp :
-    lastfp.write(setupLoc + '\n')
+        lastfp.write(setupLoc + '\n')
 except IOError:
     with open(lastLoc, 'w') as lastfp :
-    lastfp.write(setupLoc + '\n')
+        lastfp.write(setupLoc + '\n')
 
 # build setup dictionary, converting numeric values and dictionaries as needed
 setup = {}
@@ -50,10 +53,15 @@ pEdges = lEval(setup['edge_probs'])
 runSeed = lEval(setup['seed'])
 nSize = lEval(setup['network_size']) # network size
 density = lEval(setup['density']) # global density parameter
+# add 'no value' key to attributes -- can equal 0
+for attribute in attributes:
+    n_no_val = nSize - sum(attributes[attribute].itervalues())
+    if n_no_val:
+        attributes[attribute]['no value'] = n_no_val
 
 # get run time, set random generator seed, and create run ID
 runtime = datetime.today().strftime('%Y-%m-%d %H:%M')
-if !runSeed:
+if not runSeed:
     runSeed = abs(hash(urandom(20))/10000)
 runID = 'Run_' + '{0:0>4}'.format(runSeed & 0xfff)
 # This creates a "nice" run ID of the form "Run_nnnn"
@@ -85,7 +93,7 @@ for i in range(nSize):
 # iterate over dyads of nodes and set an edge between them if set_edge returns true
 for dyad in combinations(nx.nodes(G), 2):
     if eGen.set_edge(G.node[dyad[0]], G.node[dyad[1]]):
-            G.add_edge(dyad)
+            G.add_edge(dyad[0], dyad[1])
 
 # get path to output file and set file specs for output files
 outputPath = setup['output_path']
@@ -110,7 +118,8 @@ with open(infoLoc, 'w') as infofp:
     infofp.write('Run time:\t' + runtime + '\n')
     infofp.write('Seed:\t{0:d}\n'.format(runSeed))
     infofp.write('Network size:\t' + str(nSize) + '\n')
-    infofp.write('Network density:\t' + str(nx.density(G)) + '\n')
+    infofp.write('Desired network density:\t' + str(density) + '\n')
+    infofp.write('Actual network density:\t' + str(nx.density(G)) + '\n')
     infofp.write('Attributes:\t' + str(attributes) + '\n')
     infofp.write('\nActual attribute counts:\n')
     for attribute in attributeCounts:
@@ -123,7 +132,7 @@ with open(infoLoc, 'w') as infofp:
         for value in attributeSets[attribute]:
             infofp.write( '{0}:\t{1}\n'.format(value, str(attributeSets[attribute][value])) )
     infofp.write('\nCentrality Measures:\n')
-    infofp.write('Node\tDegree\tBetweeness\tCloseness\tEigenvector\n')
+    infofp.write('Node\tDegree\tDegreeC\tBetweenessC\tClosenessC\tEigenvectorC\n')
     for n in G.nodes():
-        infofp.write('{0:d}\t{1:f}\t{2:f}\t{3:f}\t{4:f}\n'.format(n, degreeC[n], betC[n],
+        infofp.write('{0:d}\t{1:d}\t{2:f}\t{3:f}\t{4:f}\t{5:f}\n'.format(n, G.degree(n), degreeC[n], betC[n],
             closeC[n], eigenC[n]))
