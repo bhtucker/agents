@@ -1,0 +1,29 @@
+{
+  "attributes": {
+    "color": {
+      "blue": 40,
+      "green": 25,
+      "red": 35
+    },
+    "region": {
+      "west": 45,
+      "east": 50
+    }
+  },
+  "network_size": 100,
+  "seed": 0,
+  "edge_probs": {
+    "color": {
+      "blue": 0.2,
+      "diff": 0.1,
+      "green": 0.25,
+      "red": 0.15
+    },
+    "region": {
+      "west": 0.2,
+      "east": 0.2,
+      "diff": 0.08
+    }
+  },
+  "density": 0.1
+}
