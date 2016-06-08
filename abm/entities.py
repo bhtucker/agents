@@ -8,7 +8,7 @@
 from uuid import uuid4
 from random import choice
 
-from abm.learners import SoftmaxLearnerMixin
+from abm.learners import SoftmaxLearnerMixin, DunceMixin
 
 
 class Task(object):
@@ -82,6 +82,13 @@ class XyEntity(Entity):
         self.cluster = cluster
         self.adjacencies = []
 
+    def set_adjacencies(self, adjacencies):
+        """
+        Builds the adjacency list for this Entity.
+        :param adjacencies: set of integers referencing other entities in self.population
+        """
+        self.adjacencies = list(adjacencies)
+
 
 class NxEntity(Entity):
     """An entity that can be a Nx graph node
@@ -109,15 +116,16 @@ class NxEntity(Entity):
             return []
 
 
-class DunceNode(NxEntity):
+class DunceNode(DunceMixin, NxEntity):
     """
     Nx compatible node that doesn't learn and just randomly draws its recipients
     """
-    def _get_next_recipient(self, task):
-        return choice(self.adjacencies)
 
-    def _learn(self):
-        pass
+
+class XyDunceNode(DunceMixin, XyEntity):
+    """
+    Xy compatible node that doesn't learn and just randomly draws its recipients
+    """
 
 
 class SoftmaxNode(SoftmaxLearnerMixin, NxEntity):

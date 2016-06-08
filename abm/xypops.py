@@ -5,11 +5,14 @@
 
     Environments not backed by networkx whose x, y traits are used in visualization
 """
+
+from scipy.stats.distributions import norm
+from scipy.stats.distributions import uniform
 from sklearn.metrics.pairwise import euclidean_distances
 
 from abm.viz import display_network
 from abm.pops import Environment
-from abm.entities import Entity
+from abm.entities import XyEntity
 import numpy as np
 from random import choice
 
@@ -28,6 +31,14 @@ CLUSTER_SIZES = {
 }
 
 
+def make_points(cluster, size, y_dist, x_dist):
+    """Creates a set of points using y_dist and x_dist to draw the location."""
+
+    ys = y_dist.rvs(size)
+    xs = x_dist.rvs(size)
+    return list(zip(xs, ys, [cluster] * size))
+
+
 class XyEnvironment(Environment):
     """
     A set of connected Entities. Handles message passing and displaying.
@@ -35,16 +46,14 @@ class XyEnvironment(Environment):
     """
 
     def __init__(self, y_pos_dist=Y_DIST, cluster_x_dists=CLUSTER_X_DIST_MAP,
-                 cluster_sizes=CLUSTER_SIZES, single_component=True, debug=True):
-        self.points = []
-        self.path = []
-        self.show = True
-        self.debug = debug
-        self.success_lens = []
+                 cluster_sizes=CLUSTER_SIZES, single_component=True,
+                 entity_class=XyEntity, **kwargs):
+        super(XyEnvironment, self).__init__(**kwargs)
+        self.population = []
         self.connectivity_matrix = None
         self.connected_components = []
         self.node_component_map = {}
-
+        self.entity_class = entity_class
         self._set_entities(y_pos_dist, cluster_x_dists, cluster_sizes)
         self._set_connectivity_matrix()
         self._set_connections()
@@ -57,18 +66,17 @@ class XyEnvironment(Environment):
             point_args += make_points(cluster, size,
                                       y_pos_dist, cluster_x_dists[cluster])
 
-        for ix, args in enumerate(point_args):
-            pt = Entity(self, ix, *args)
-            self.points.append(pt)
-        self.size = len(self.points)
+        for ix, (x, y, cluster) in enumerate(point_args):
+            pt = self.entity_class(environment=self, index=ix, x=x, y=y, cluster=cluster)
+            self.population.append(pt)
+        self.size = len(self.population)
 
     def _set_connections(self, track_components=True):
         """Initializes each Entity's adjacency list.
         :param track_components: Flag for tracking connected components during graph construction
         """
 
-        self._set_connectivity_matrix()
-        for index, point in enumerate(self.points):
+        for index, point in enumerate(self.population):
 
             # make set of connections to indices; np.where returns a tuple
             adjacencies = set(np.where(self.connectivity_matrix[index] > 0)[0])
@@ -96,7 +104,7 @@ class XyEnvironment(Environment):
                 # resolve potential component connections
                 self._resolve_components(component)
 
-        n = float(len(self.points))
+        n = float(len(self.population))
         k = float(np.sum(self.connectivity_matrix)) / 2
         self.edge_density = k / (n * (n - 1) / 2)
 
@@ -108,8 +116,8 @@ class XyEnvironment(Environment):
         for ix, component in enumerate(self.connected_components[:-1]):
             start, end = (choice(list(component)), choice(
                 list(self.connected_components[ix + 1])))
-            self.points[start].adjacencies.append(end)
-            self.points[end].adjacencies.append(start)
+            self.population[start].adjacencies.append(end)
+            self.population[end].adjacencies.append(start)
             self.connectivity_matrix[start][end] = True
             self.connectivity_matrix[end][start] = True
             self.connected_components[ix].add(end)
@@ -142,7 +150,7 @@ class XyEnvironment(Environment):
             return
 
         # generate a random symmetric matrix
-        point_count = len(self.points)
+        point_count = len(self.population)
         matrix = np.random.randint(
             0, 2, point_count ** 2).reshape(point_count, point_count)
         matrix = (matrix + matrix.T) / 2
@@ -159,7 +167,7 @@ class XyEnvironment(Environment):
         if not self.show:
             return
 
-        display_network(self.points, self.connectivity_matrix,
+        display_network(self.population, self.connectivity_matrix,
                         current=current, target=target)
 
 

@@ -4,8 +4,21 @@
     ~~~~~~~~~~~~
 
     Learning mixins to add to entity subclasses
+    Should implement _get_next_recipient and _learn
 """
 import numpy as np
+from random import choice
+
+
+class DunceMixin(object):
+    """
+    A learner that doesn't learn
+    """
+    def _get_next_recipient(self, task):
+        return choice(self.adjacencies)
+
+    def _learn(self):
+        pass
 
 
 class SoftmaxLearnerMixin(object):

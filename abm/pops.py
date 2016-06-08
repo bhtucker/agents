@@ -10,14 +10,6 @@ from cached_property import cached_property
 import numpy as np
 
 
-def make_points(cluster, size, y_dist, x_dist):
-    """Creates a set of points using y_dist and x_dist to draw the location."""
-
-    ys = y_dist.rvs(size)
-    xs = x_dist.rvs(size)
-    return list(zip(xs, ys, [cluster] * size))
-
-
 class Environment(object):
     def __init__(self, debug=True, path_cutoff=20):
         self.path = []
