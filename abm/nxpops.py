@@ -77,9 +77,9 @@ class NxEnvironment(pops.Environment):
     def describe(self):
         """
         Provide summary statistics about the generated graph
-        Returns a human readable string
+        Logs (prints; todo: use logger) a human readable string
         """
-        return """
+        self.log("""
         Network creation time (UTC): {ts}
         Network size: {size}
         Target density: {config_density}
@@ -92,7 +92,7 @@ class NxEnvironment(pops.Environment):
             config_density=self.density,
             real_density=nx.density(self.graph),
             attributes=self.attributes,
-            attribute_counts={k: dict(v) for k, v in self.attribute_counts.items()})
+            attribute_counts={k: dict(v) for k, v in self.attribute_counts.items()}))
 
 
 class SoftmaxNxEnvironment(pops.TaskFeatureMixin, NxEnvironment):
