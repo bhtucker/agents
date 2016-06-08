@@ -82,13 +82,6 @@ class XyEntity(Entity):
         self.cluster = cluster
         self.adjacencies = []
 
-    def set_adjacencies(self, adjacencies):
-        """
-        Builds the adjacency list for this Entity.
-        :param adjacencies: set of integers referencing other entities in self.environment
-        """
-        self.adjacencies = list(adjacencies)
-
 
 class NxEntity(Entity):
     """An entity that can be a Nx graph node
