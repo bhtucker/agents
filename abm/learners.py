@@ -55,13 +55,12 @@ class SoftmaxLearnerMixin(object):
             self.log(softmax_list[0])
             decision = softmax_list[0][0]
             self.last_recipient = decision
-
         return decision
 
     def _learn(self):
         assert self.last_recipient is not None
         grad = _gradient_precomputed(self.last_recipient, self.softmaxes,
-                                          self.latest_x, self.value > 0)
+                                     self.latest_x, self.value > 0)
         self.log(grad)
         w_adjustment = grad * (self.value / 100. if self.value > 0 else 1)
         self.w_container[self.last_recipient] += w_adjustment

@@ -17,7 +17,7 @@ CLUSTER_COLORS = {
 
 def display_network(pts, connectivity_matrix, current=None, target=None):
     fig = construct_network(pts, connectivity_matrix, current=current, target=target)
-    fig.show()
+    plt.show()
 
 
 def construct_network(pts, connectivity_matrix, current=None, target=None):

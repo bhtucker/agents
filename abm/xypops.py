@@ -128,7 +128,7 @@ class XyEnvironment(Environment):
     def _resolve_components(self, component):
         """
         Find components thought to be separate that now have intersections
-        Condense these and set self.connected_components to be a list of disjoint sets 
+        Condense these and set self.connected_components to be a list of disjoint sets
         """
         resolved_components = [component]
         for other_component in self.connected_components:
@@ -171,7 +171,7 @@ class XyEnvironment(Environment):
                         current=current, target=target)
 
 
-class CappedPreferentialEnvironment(Environment):
+class CappedPreferentialEnvironment(XyEnvironment):
     """
     A set of connected Entities. Handles message passing and displaying. Connections are laid
     out such that entities of the same cluster are more likely to be tied together,
@@ -213,21 +213,21 @@ class CappedPreferentialEnvironment(Environment):
                     [0, 0, 1], p=[1 - beta, beta * alpha, beta * (1 - alpha)])
             return tie
 
-        matrix = np.array([[0] * len(self.points)
-                           for _ in range(len(self.points))])
+        matrix = np.array([[0] * len(self.population)
+                           for _ in range(len(self.population))])
 
         # since the graph is undirected, the matrix is symmetric,
         # which in turn means we need only compute the lower triangular
         # elements and then copy them into the upper triangular elements
-        for i, point1 in enumerate(self.points):
-            for j, point2 in enumerate(self.points[:i]):
+        for i, point1 in enumerate(self.population):
+            for j, point2 in enumerate(self.population[:i]):
                 matrix[i][j] = decide_connection(point1, point2)
                 matrix[j][i] = matrix[i][j]
 
         self.connectivity_matrix = matrix
 
 
-class NearestNeighborsEnvironment(Environment):
+class NearestNeighborsEnvironment(XyEnvironment):
     """
     A set of connected Entities. Handles message passing and displaying. Connections laid
     out geographically: each point is connected to some of its nearest neighbors.
@@ -242,7 +242,7 @@ class NearestNeighborsEnvironment(Environment):
         if self.connectivity_matrix is not None:
             return
 
-        points_arr = np.array([[p.x, p.y] for p in self.points])
+        points_arr = np.array([[p.x, p.y] for p in self.population])
         distance_mat = euclidean_distances(points_arr, points_arr)
 
         # Every point p will be connected to each other point whose distance

@@ -1,2 +1,5 @@
 *.pyc
 *.org
+*.DS_store
+*.egg-info*
+*.cache
