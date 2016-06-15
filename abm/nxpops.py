@@ -35,9 +35,11 @@ class NxEnvironment(pops.Environment):
 
         self._setup_nx_graph(attributes, edge_probs, seed, size, density)
 
-        while not nx.is_connected(self.graph):
-            print("Not connected!")
+        retries = 0
+        while not nx.is_connected(self.graph) and retries < 50:
+            self.log("Not connected, redrawing.")
             self._setup_nx_graph(attributes, edge_probs, seed, size, density)
+            retries += 1
 
         self.population = self.graph.node
 
@@ -67,6 +69,7 @@ class NxEnvironment(pops.Environment):
             G.add_node(i, entity)
 
         # iterate over dyads of nodes and set an edge between them if set_edge returns true
+        # this might be slow!
         for dyad in combinations(nx.nodes(G), 2):
             if edge_gen.set_edge(G.node[dyad[0]], G.node[dyad[1]]):
                     G.add_edge(*dyad)
