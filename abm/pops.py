@@ -15,7 +15,6 @@ class Environment(object):
         self.path = []
         self.show = True
         self.debug = debug
-        self.success_lens = []
         self.path_cutoff = path_cutoff
 
     def log(self, msg):
@@ -31,9 +30,6 @@ class Environment(object):
             awarded.add(point)
             amount = self._calculate_award(task, self.path, point)
             self.population[point].award(amount)
-
-        self.success_lens.append(len(self.path))
-        self.path = []
 
     def _calculate_award(self, task, path, entity):
         """
@@ -60,6 +56,7 @@ class Environment(object):
         self.log('starting at %s and aiming for %s' % (start, end))
 
         task = self._generate_task(end)
+        self.path = []
         self._run_task(start, task)
 
     def _generate_task(self, target):

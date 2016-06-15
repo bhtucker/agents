@@ -34,6 +34,11 @@ class NxEnvironment(pops.Environment):
         self.attr_gen_class = attr_gen_class
 
         self._setup_nx_graph(attributes, edge_probs, seed, size, density)
+
+        while not nx.is_connected(self.graph):
+            print("Not connected!")
+            self._setup_nx_graph(attributes, edge_probs, seed, size, density)
+
         self.population = self.graph.node
 
     def _setup_nx_graph(self, attributes, edge_probs, seed, size, density):
@@ -65,6 +70,7 @@ class NxEnvironment(pops.Environment):
         for dyad in combinations(nx.nodes(G), 2):
             if edge_gen.set_edge(G.node[dyad[0]], G.node[dyad[1]]):
                     G.add_edge(*dyad)
+
         self.graph = G
         self.attribute_counts = attribute_counts
 
