@@ -1,31 +1,52 @@
 # Agents
 
-Agent based modeling from the ground up
+## Introduction
 
-How might different machine learning strategies lead to different agent behaviors?
+This is an agent-based model (ABM) in which the agents are embedded in a
+network, one in each node. The main simulation consists of a package being
+placed at a given starting node, `u`. The package has the identity of its
+recipient, which `u` then reads and decides which of its adjacencies to hand the
+package to, so that it may arrrive to its destination. Each agent only knows
+about their immediate neighbors, not the global topology.
 
-## Initial Sketch
+At first, the agents do not know how to use the information in the package to
+correctly route it, but they are given learning mechanisms to improve their
+decisions. This is done by using a reward system.
 
-In the initial sketch:
+After a task is completed (package is delivered, or otherwise lost), the
+environment gives a reward to each of the agents who participated in the
+delivery chain. This is the only information each agent receives about the
+success or failure of their decision.
 
-* A world of agents is randomly created, with connections defined by physical proximity 
-* Task messages are handed down to a particular agent, who aims to pass it to its delivery address
-* Agents choose randomly from among their connections to send the package on its way
-* When a successful delivery occurs, particpants are `award`ed some `value` that is a function of the number of steps in the delivery chain and their proximity to the end of the chain
-* When an agent receives an award, it might increase the likelihood of sending a message to the neighbor it sent the message to during that successful run. The higher the value awarded, the more likely they are to make this permanent change to their connection-sending preferences
 
-## Initial Results
+## Purpose
 
-The sketch supports plotting of the entity graph and of the passing of the message.
+Answer questions such as:
 
-![The Graph](images/graph.png)
+* How might different machine learning strategies lead to different agent behaviors?
+* How do hardcoded learning mechanisms correlate to global routing efficiency?
+* How do different network topology measures correlate with learning rates of individual agents?
 
-We asked the agents to deliver the magenta point to the yellow point, 25 times:
 
-![The Task](images/target.png)
+## Details
 
-And here were the number of traversals made during successful runs over course of those iterations:
+#### Agents
 
-![Learning](images/learning.png)
+Agents' identities are determined by a feature vector that defines their
+characteristics. The package contains the feature vector of the recipient, which
+the agent holding the package can read. From this information, the agent must
+decide which of its adjacencies to hand the package to.
 
-As you can see, the agents were able to deliver the message faster as they went along!
+#### Networks
+
+The project implements different ways to build networks with different
+topologies, from the comletely random to drawing from edge probabilities based
+on feature similarity of end nodes.
+
+
+#### Learning
+
+The project implements many different mechanisms in which agents decide who to
+handle the message. Most importantly, by comparing feature vectors of the
+recipient to those of its adjacencies. (Assuming that agents with similar
+features are closer in the network.)
