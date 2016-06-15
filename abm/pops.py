@@ -94,6 +94,8 @@ class Environment(object):
 
 class TaskFeatureMixin(object):
     """Overrides _generate_task with a feature-defining version"""
+    node_index_indicator = False
+
     @cached_property
     def _attribute_categories(self):
         return [(k, v.keys()) for k, v in self.attributes.items()]
@@ -104,11 +106,16 @@ class TaskFeatureMixin(object):
         Return a task with this vector accessible as task.features
         """
         target_node = self.population[target]
-        feature_vec_components = []
+        feature_vec_components = [np.ones(1)]
         for attribute, categories in self._attribute_categories:
             component = np.zeros(len(categories))
             target_val = getattr(target_node, attribute)
             component[categories.index(target_val)] = 1
+            feature_vec_components.append(component)
+
+        if self.node_index_indicator:
+            component = np.zeros(len(self.population))
+            component[target] = 1
             feature_vec_components.append(component)
 
         feature_vec = np.hstack(feature_vec_components)

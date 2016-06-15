@@ -12,6 +12,7 @@ from itertools import combinations
 from matplotlib.pylab import plt
 from datetime import datetime
 from collections import defaultdict
+from scipy.stats import norm
 
 from abm import pops, entities
 from abm.generators import EdgeGenerator, AttributeGenerator
@@ -102,6 +103,68 @@ class NxEnvironment(pops.Environment):
 
 
 class SoftmaxNxEnvironment(pops.TaskFeatureMixin, NxEnvironment):
+    """
+    A NetworkX environment where tasks have categorical feature vectors
+    and nodes use that vector to select the appropriate neighbor
+    """
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('entity_class', entities.SoftmaxNode)
-        super(SoftmaxNxEnvironment, self).__init__(*args, **kwargs)
+        _kwargs = dict(kwargs)
+        _kwargs.setdefault('entity_class', entities.SoftmaxNode)
+        self.node_index_indicator = _kwargs.pop('node_index_indicator', False)
+
+        super(SoftmaxNxEnvironment, self).__init__(*args, **_kwargs)
+
+
+class PathTreeMixin(object):
+    """
+    Track the message traversals in a nx graph datastructure
+    Give awards based on direct distance from element to target,
+    with highest awards given in the middle of the path.
+    """
+    advantage_distribution = norm(0, .33)
+
+    def _calculate_direct_lengths(self):
+        """
+        Convert our path with potential loops into a directed tree
+        Store the normalized direct distance for each node in the path
+        """
+        g = nx.DiGraph()
+        path = self.path
+        target = path[-1]
+        for ix in range(len(path) - 2, -1, -1):
+            pair = path[ix], path[ix + 1]
+            if not g.neighbors(pair[0]):
+                g.add_edge(*pair)
+
+        direct_path_lens = {
+            n: nx.shortest_path_length(g, n, target)
+            for n in g.node
+        }
+
+        max_len = float(max(direct_path_lens.values()))
+
+        self.normalized_node_len_map = {
+            n: (p / max_len) - .5
+            for n, p in direct_path_lens.iteritems()
+        }
+
+    def _distribute_awards(self, task):
+        if self.path[-1] == task.target:
+            self._calculate_direct_lengths()
+        else:
+            self.normalized_node_len_map = None
+
+        for node in self.path_tree.node:
+            amount = self._calculate_award(task, _, node)
+            self.population[node].award(amount)
+
+    def _calculate_award(self, task, path, entity):
+        if self.normalized_node_len_map is None:
+            return 0
+        normalized_len = self.normalized_node_len_map[entity]
+        advantage_coef = self.advantage_distribution.pdf(normalized_len)
+        return advantage_coef * task.value
+
+
+class SoftmaxNxPathTreeEnvironment(PathTreeMixin, SoftmaxNxEnvironment):
+    __doc__ = '\n'.join([SoftmaxNxEnvironment.__doc__, PathTreeMixin.__doc__])
