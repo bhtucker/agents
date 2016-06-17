@@ -17,7 +17,7 @@ before_install:
   - export DYLD_LIBRARY_PATH=$HOME/miniconda2/lib
   - conda update --yes conda
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy pytest pandas networkx libgfortran scikit-learn
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy pytest pandas networkx libgfortran matplotlib scikit-learn seaborn
   - pip install -r requirements-travis.txt
   - pip install .
 script:
