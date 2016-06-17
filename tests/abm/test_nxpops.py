@@ -33,11 +33,11 @@ def test_performance_gains(fine_grained_pop_kwargs):
 	for i in range(100):
 		smpop.initiate_task()
 		early_lens.append(len(smpop.path))
-	for i in range(5000):
+	for i in range(10000):
 		smpop.initiate_task()
 	late_lens = []
 	for i in range(100):
 		smpop.initiate_task()
 		late_lens.append(len(smpop.path))
-	assert sum(early_lens) > (sum(late_lens) * 1.3)
+	assert sum(early_lens) > (sum(late_lens) * 1.2)
 
