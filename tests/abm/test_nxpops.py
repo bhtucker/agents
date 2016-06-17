@@ -14,11 +14,14 @@ from abm import nxpops
 def test_feature_vec_options(simple_pop_kwargs):
 	smpop = nxpops.SoftmaxNxEnvironment(**simple_pop_kwargs)
 	task1 = smpop._generate_task(2)
-	assert task1.features.sum() == 2
-	smpop = nxpops.SoftmaxNxEnvironment(node_index_indicator=True, **simple_pop_kwargs)
+	assert task1.features.sum() == 1
+	smpop = nxpops.SoftmaxNxEnvironment(bias=True, **simple_pop_kwargs)
 	task2 = smpop._generate_task(2)
-	assert task2.features.sum() == 3
-	assert len(task1.features) == (len(task2.features) - simple_pop_kwargs['size'])
+	assert task2.features.sum() == 2
+	smpop = nxpops.SoftmaxNxEnvironment(bias=True, node_index_indicator=True, **simple_pop_kwargs)
+	task3 = smpop._generate_task(2)
+	assert task3.features.sum() == 3
+	assert len(task2.features) == (len(task3.features) - simple_pop_kwargs['size'])
 
 
 @pytest.mark.integration

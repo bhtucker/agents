@@ -7,6 +7,7 @@
     Should implement _get_next_recipient and _learn
 """
 import numpy as np
+import operator
 from random import choice
 
 
@@ -24,6 +25,8 @@ class DunceMixin(object):
 class SoftmaxLearnerMixin(object):
     last_recipient = None
     w_container = None
+    update_buffer = None
+    policy_duration = 1
 
     def _get_next_recipient(self, task):
         """
@@ -31,9 +34,12 @@ class SoftmaxLearnerMixin(object):
         Sets "pending" state once a decision is made
         """
 
-        # lazily initialize random weights
+        # lazily initialize random weights and weight update buffer (for policy rollouts)
         if self.w_container is None:
             self.w_container = {a: np.random.random(task.features.shape) for a in self.adjacencies}
+        if self.update_buffer is None:
+            self.flush_count = 0
+            self.update_buffer = []
 
         # if you have a decision pending feedback and are asked to make another,
         # mark that last decision as 'wrong' before proceeding
@@ -48,26 +54,33 @@ class SoftmaxLearnerMixin(object):
             # don't actually use your weights to decide if the neighbor is visible
             self.last_recipient = decision = task.target
         else:
-            # softmax_list is [(neighbor_index, score) ... ]
-            # sort this to pick the highest scoring neighbor as recipient
-            softmax_list = self.softmaxes.items()
-            softmax_list.sort(key=lambda t: -t[1])
-            self.log(softmax_list[0])
-            decision = softmax_list[0][0]
+            decision = max(self.softmaxes.iteritems(), key=operator.itemgetter(1))[0]
             self.last_recipient = decision
         return decision
 
     def _learn(self):
         assert self.last_recipient is not None
+
         grad = _gradient_precomputed(self.last_recipient, self.softmaxes,
                                      self.latest_x, self.value > 0)
         self.log(grad)
         w_adjustment = grad * (self.value / 100. if self.value > 0 else 1)
-        self.w_container[self.last_recipient] += w_adjustment
+
+        self.update_buffer.append((self.last_recipient, w_adjustment))
+
         self.last_recipient, self.softmaxes, self.latest_x = None, None, None
+        # if len(self.update_buffer) >= self.policy_duration:
+        #     self.flush_updates()
+
+    def flush_updates(self):
+        self.flush_count += 1
+        for adjacency_index, w_adjustment in self.update_buffer:
+            self.w_container[adjacency_index] += w_adjustment
+        self.update_buffer = []
 
 
 def _gradient_precomputed(k, softmaxes, train_x, success):
+    # set magnitude of gradient proportionally to confidence
     grad = train_x * ((1 if success else 0) - softmaxes[k])
     return grad
 

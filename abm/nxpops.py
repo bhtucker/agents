@@ -20,49 +20,48 @@ from abm.generators import EdgeGenerator, AttributeGenerator
 
 class NxEnvironment(pops.Environment):
     """A network graph (with NetworkX)"""
-    def __init__(self, attributes, edge_probs, seed=0, size=100, density=.1,
+    def __init__(self, attributes, edge_probs, size=100, density=.1, path_cutoff=20,
                  entity_class=entities.NxEntity, edge_gen_class=EdgeGenerator,
-                 attr_gen_class=AttributeGenerator, debug=True):
-        super(NxEnvironment, self).__init__(debug=debug)
+                 attr_gen_class=AttributeGenerator, entity_kwargs={}, debug=True):
+        super(NxEnvironment, self).__init__(debug=debug, path_cutoff=path_cutoff)
         self.created_time_utc = datetime.utcnow().isoformat()
         self.attributes = attributes
         self.edge_probs = edge_probs
-        self.seed = seed
         self.size = size
         self.density = density
         self.entity_class = entity_class
         self.edge_gen_class = edge_gen_class
         self.attr_gen_class = attr_gen_class
 
-        self._setup_nx_graph(attributes, edge_probs, seed, size, density)
+        self._setup_nx_graph(**entity_kwargs)
 
         retries = 0
         while not nx.is_connected(self.graph) and retries < 50:
             self.log("Not connected, redrawing.")
-            self._setup_nx_graph(attributes, edge_probs, seed, size, density)
+            self._setup_nx_graph(**entity_kwargs)
             retries += 1
 
         self.population = self.graph.node
 
-    def _setup_nx_graph(self, attributes, edge_probs, seed, size, density):
+    def _setup_nx_graph(self, **entity_kwargs):
         # instantiate attribute generator to distribute attributes over nodes
         # takes attributes dictionary and the network size as parms
-        attr_gen = self.attr_gen_class(attributes, size)
+        attr_gen = self.attr_gen_class(self.attributes, self.size)
 
         # instantiate edge generator to determine dyadic ties
         # takes attributes dictionary,the unscaled probabilities of ties
         # between nodes of similar or disimilar type, network size and density as parms
-        edge_gen = self.edge_gen_class(attributes, edge_probs, density)
+        edge_gen = self.edge_gen_class(self.attributes, self.edge_probs, self.density)
 
         # create an empty graph
         G = nx.Graph()
 
         # create and distribute node attributes and record which nodes are in which attribute class
-        attribute_counts = {attr: defaultdict(lambda: 0) for attr in attributes}
+        attribute_counts = {attr: defaultdict(lambda: 0) for attr in self.attributes}
 
-        for i in range(size):
-            node_attrs = {}
-            for attribute in attributes:
+        for i in range(self.size):
+            node_attrs = dict(entity_kwargs)
+            for attribute in self.attributes:
                 value = attr_gen.get_value(attribute)
                 attribute_counts[attribute][value] += 1
                 node_attrs[attribute] = value
@@ -70,9 +69,10 @@ class NxEnvironment(pops.Environment):
             G.add_node(i, entity)
 
         # iterate over dyads of nodes and set an edge between them if set_edge returns true
-        # this might be slow!
+        # involves size * size-1 calls, potential bottleneck in large graphs
         for dyad in combinations(nx.nodes(G), 2):
-            if edge_gen.set_edge(G.node[dyad[0]], G.node[dyad[1]]):
+            nodes = [G.node[d] for d in dyad]
+            if edge_gen.set_edge(*nodes):
                     G.add_edge(*dyad)
 
         self.graph = G
@@ -110,12 +110,30 @@ class SoftmaxNxEnvironment(pops.TaskFeatureMixin, NxEnvironment):
     A NetworkX environment where tasks have categorical feature vectors
     and nodes use that vector to select the appropriate neighbor
     """
-    def __init__(self, *args, **kwargs):
-        _kwargs = dict(kwargs)
-        _kwargs.setdefault('entity_class', entities.SoftmaxNode)
-        self.node_index_indicator = _kwargs.pop('node_index_indicator', False)
+    def __init__(self, attributes, edge_probs, size=100, density=.1,
+                 entity_class=entities.SoftmaxNode, edge_gen_class=EdgeGenerator,
+                 node_index_indicator=False, bias=False, path_cutoff=20, policy_duration=1,
+                 attr_gen_class=AttributeGenerator, entity_kwargs={}, debug=True):
+        self.node_index_indicator = node_index_indicator
+        self.bias = bias
+        self.update_count = 0
+        self.policy_duration = policy_duration
+        super(SoftmaxNxEnvironment, self).__init__(
+            attributes, edge_probs, size=size, density=density, path_cutoff=path_cutoff,
+            entity_class=entity_class, edge_gen_class=edge_gen_class,
+            attr_gen_class=attr_gen_class, entity_kwargs=entity_kwargs, debug=debug
+        )
 
-        super(SoftmaxNxEnvironment, self).__init__(*args, **_kwargs)
+    def flush_updates(self):
+        for node in self.population.itervalues():
+            if node.update_buffer:
+                node.flush_updates()
+
+    def _distribute_awards(self, task):
+        self.update_count += 1
+        super(SoftmaxNxEnvironment, self)._distribute_awards(task)
+        if self.update_count >= self.policy_duration:
+            self.flush_updates()
 
 
 class PathTreeMixin(object):
@@ -134,6 +152,7 @@ class PathTreeMixin(object):
         g = nx.DiGraph()
         path = self.path
         target = path[-1]
+        g.add_nodes_from(path)
         for ix in range(len(path) - 2, -1, -1):
             pair = path[ix], path[ix + 1]
             if not g.neighbors(pair[0]):

@@ -12,7 +12,7 @@ def simple_pop_kwargs():
               "diff": 0.1,
               "green": 0.25,
               "red": 0.15
-          }}, size=6)
+          }}, size=6, density=.9)
 
 
 @pytest.fixture
