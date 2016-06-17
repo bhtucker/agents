@@ -52,7 +52,11 @@ def fine_grained_pop_kwargs():
       "nine": 0.1,
       "ten": 0.1,
       "diff": 0.02
-    }}, size=50)
+    }},
+    density=.09,
+    policy_duration=1,
+    path_cutoff=12,
+     size=50)
 
 
 @pytest.fixture
