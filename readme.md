@@ -1,4 +1,5 @@
 # Agents
+![Travis Badge](https://travis-ci.org/bhtucker/agents.svg?branch=travis)
 
 ## Introduction
 
