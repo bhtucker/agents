@@ -81,7 +81,7 @@ class NxEnvironment(pops.Environment):
     def display(self, current=None, target=None):
         if not self.show:
             return
-        nx.draw_spring(self.graph)
+        nx.draw(self.graph)
         plt.show()
 
     def describe(self):
