@@ -57,7 +57,9 @@ def get_env_likelihood_samples(env, as_df=True, n_tasks=36000, sample_each=400, 
     env.debug = False
     env.show = False
     for i in range(n_tasks):
-        env.initiate_task()
+        task = env.initiate_task()
+        env.run_task(task)
+
         if i % sample_each == 0:
             if as_df:
                 df = path_likelihood_with_dyad_traits(env, dyads, dyad_data)
@@ -114,7 +116,7 @@ def learnt_over_shortest_path_len(env, start, end, shortest_len=None):
 
     learnt_len = 0
 
-    task = env._generate_task(end)
+    task = env._generate_task(start, end)
     node = env.population[start]
     while node.index != end and learnt_len < 40:
         learnt_len += 1

@@ -42,7 +42,7 @@ class Environment(object):
         return (task.value / k)
 
     def initiate_task(self, fixed_pair=None):
-        """Initializes a task, and calls pass_message()."""
+        """Initializes a task. Call run_task() only after calling this."""
 
         start, end = [-1, -1] if not fixed_pair else fixed_pair
 
@@ -55,18 +55,18 @@ class Environment(object):
         self.log('new task created')
         self.log('starting at %s and aiming for %s' % (start, end))
 
-        task = self._generate_task(end)
+        task = self._generate_task(start, end)
         self.path = []
-        self._run_task(start, task)
+        return task
 
-    def _generate_task(self, target):
-        return Task(target)
+    def _generate_task(self, start, target):
+        return Task(start, target)
 
-    def _run_task(self, start, task):
-
-        recipient = self.population[start].next(task, sender=None)
-        sender = start
-        self.path.append(start)
+    def run_task(self, task):
+        """Run a task previously initialized with from start to finish."""
+        sender = task.start
+        recipient = self.population[sender].next(task, sender=None)
+        self.path.append(sender)
 
         while not (recipient == task.target or len(self.path) > self.path_cutoff):
             self.path.append(recipient)
@@ -101,7 +101,7 @@ class TaskFeatureMixin(object):
     def _attribute_categories(self):
         return [(k, v.keys()) for k, v in self.attributes.items()]
 
-    def _generate_task(self, target):
+    def _generate_task(self, start, target):
         """
         Convert categorical data about the target into an indicator vector
         Return a task with this vector accessible as task.features
@@ -120,5 +120,5 @@ class TaskFeatureMixin(object):
             feature_vec_components.append(component)
 
         feature_vec = np.hstack(feature_vec_components)
-        task = Task(target, features=feature_vec)
+        task = Task(start, target, features=feature_vec)
         return task

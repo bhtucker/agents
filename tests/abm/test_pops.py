@@ -28,7 +28,7 @@ def test_distribute_awards(basicenv):
     for i in range(6):
         basicenv.population.append(MockEntity())
     basicenv.path = [1, 2, 3, 2, 4]
-    task = Task(4)
+    task = Task(1, 4)
     basicenv._distribute_awards(task)
 
     observed = [

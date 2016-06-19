@@ -42,7 +42,7 @@ def learnt_nxpop(nxpop):
     """
     Provides nxpop fixtures with sequential traversal learned
     """
-    task = nxpop._generate_task(5)
+    task = nxpop._generate_task(1, 5)
     for i in range(5):
         nxpop.population[i]._get_next_recipient(task)
         nxpop.population[i].last_recipient = i + 1
@@ -76,4 +76,3 @@ def test_fixture_learning(learnt_nxpop):
     for i in range(10):
         ratio = analysis.learnt_over_shortest_path_len(learnt_nxpop, 1, 5)
         assert np.isclose(ratio, 1.333, rtol=.02)
-
