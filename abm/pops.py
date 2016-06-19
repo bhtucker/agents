@@ -55,26 +55,51 @@ class Environment(object):
         self.log('new task created')
         self.log('starting at %s and aiming for %s' % (start, end))
 
-        task = self._generate_task(start, end)
-        self.path = []
-        return task
+        self.task = self._generate_task(start, end)
+        self.path.append(start)
+        self.path = [start]
+        return self.task
 
     def _generate_task(self, start, target):
         return Task(start, target)
 
-    def run_task(self, task):
+    def run_task(self):
         """Run a task previously initialized with from start to finish."""
-        sender = task.start
-        recipient = self.population[sender].next(task, sender=None)
-        self.path.append(sender)
+        assert hasattr(self, "task") and self.task is not None, \
+          "Make sure to call initiate_task() before run_task()!"
 
-        while not (recipient == task.target or len(self.path) > self.path_cutoff):
+        sender = self.task.start
+        recipient = self.population[sender].next(self.task, sender=None)
+
+        while not (recipient == self.task.target or len(self.path) > self.path_cutoff):
             self.path.append(recipient)
-            next_recipient = self.population[recipient].next(task, sender=sender)
+            next_recipient = self.population[recipient].next(self.task, sender=sender)
             sender = recipient
             recipient = next_recipient
 
-        self._distribute_awards(task)
+        self._distribute_awards(self.task)
+        self.task = None
+
+    def step_task(self):
+        """Execute only one task-passing step.
+
+        If it's the last step, also distribute awards.
+        """
+        assert hasattr(self, "task") and self.task is not None and len(self.path) > 0, \
+          "Make sure to call initiate_task() before step_task()!"
+
+        sender = self.path[-1]
+        recipient = self.population[sender].next(self.task, sender=None)
+
+        if self._task_terminated():
+            self._distribute_awards(self.task)
+            self.task = None
+        else:
+            self.path.append(recipient)
+
+    def _task_terminated(self):
+        return (len(self.path) > 0 and self.path[-1] == self.task.target) \
+          or len(self.path) > self.path_cutoff
 
     def _pick_start_end(self):
         return np.random.randint(self.size, size=2).tolist()

@@ -57,8 +57,8 @@ def get_env_likelihood_samples(env, as_df=True, n_tasks=36000, sample_each=400, 
     env.debug = False
     env.show = False
     for i in range(n_tasks):
-        task = env.initiate_task()
-        env.run_task(task)
+        env.initiate_task()
+        env.run_task()
 
         if i % sample_each == 0:
             if as_df:
