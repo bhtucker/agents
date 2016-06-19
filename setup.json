@@ -10,7 +10,10 @@
       "east": 50
     }
   },
-  "network_size": 100,
+  "size": 100,
+  "entity_kwargs":{
+    "policy_duration": 1
+  },
   "seed": 0,
   "edge_probs": {
     "color": {
