@@ -2,6 +2,64 @@ import pytest
 
 
 @pytest.fixture
+def simple_pop_kwargs():
+  return dict(attributes={"color": {
+              "blue": 40,
+              "green": 25,
+              "red": 35
+          }}, edge_probs={"color": {
+              "blue": 0.2,
+              "diff": 0.1,
+              "green": 0.25,
+              "red": 0.15
+          }}, size=6, density=.9)
+
+
+@pytest.fixture
+def fine_grained_pop_kwargs():
+  return dict(attributes={"color": {
+              "blue": 40,
+              "green": 25,
+              "red": 35
+          },
+        "feature": {
+          "one": 10,
+          "two": 10,
+          "three": 10,
+          "four": 10,
+          "five": 10,
+          "six": 10,
+          "seven": 10,
+          "eight": 10,
+          "nine": 10,
+          "ten": 10
+        }
+          }, edge_probs={"color": {
+              "blue": 0.2,
+              "diff": 0.1,
+              "green": 0.25,
+              "red": 0.15
+          },
+          "feature": {
+      "one": 0.4,
+      "two": 0.4,
+      "three": 0.4,
+      "four": 0.4,
+      "five": 0.1,
+      "six": 0.1,
+      "seven": 0.1,
+      "eight": 0.1,
+      "nine": 0.1,
+      "ten": 0.1,
+      "diff": 0.02
+    }},
+    density=.09,
+    policy_duration=1,
+    path_cutoff=12,
+     size=50)
+
+
+@pytest.fixture
 def analysis_df_data_dict():
     return {u'end_color': {0: u'blue',
                     1: u'red',

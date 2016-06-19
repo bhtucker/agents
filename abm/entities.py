@@ -132,4 +132,3 @@ class SoftmaxNode(SoftmaxLearnerMixin, NxEntity):
     """
     Nx nodes with softmax learning
     """
-    pass

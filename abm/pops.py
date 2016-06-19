@@ -94,6 +94,7 @@ class Environment(object):
 
 class TaskFeatureMixin(object):
     """Overrides _generate_task with a feature-defining version"""
+    bias = False
     node_index_indicator = False
 
     @cached_property
@@ -106,7 +107,7 @@ class TaskFeatureMixin(object):
         Return a task with this vector accessible as task.features
         """
         target_node = self.population[target]
-        feature_vec_components = [np.ones(1)]
+        feature_vec_components = [np.ones(1)] if self.bias else []
         for attribute, categories in self._attribute_categories:
             component = np.zeros(len(categories))
             target_val = getattr(target_node, attribute)

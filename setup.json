@@ -14,7 +14,6 @@
   "entity_kwargs":{
     "policy_duration": 1
   },
-  "seed": 0,
   "edge_probs": {
     "color": {
       "blue": 0.2,

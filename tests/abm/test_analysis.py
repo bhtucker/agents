@@ -16,24 +16,15 @@ import pytest
 
 
 @pytest.fixture
-def nxpop():
+def nxpop(simple_pop_kwargs):
     """
     Provides a 6-node non-learned SoftmaxNxEnvironment
     with two paths from 0 to 5:
     0 - 1 - 2 - 3 - 4 - 5
      \ - - - - - - /
     """
-    pop = nxpops.SoftmaxNxEnvironment(
-        attributes={"color": {
-            "blue": 40,
-            "green": 25,
-            "red": 35
-        }}, edge_probs={"color": {
-            "blue": 0.2,
-            "diff": 0.1,
-            "green": 0.25,
-            "red": 0.15
-        }}, size=6)
+    pop = nxpops.SoftmaxNxEnvironment(**simple_pop_kwargs)
+
     for edge in pop.graph.edges():
         pop.graph.remove_edge(*edge)
 
@@ -58,6 +49,7 @@ def learnt_nxpop(nxpop):
         nxpop.population[i].award(1000)
     nxpop.population[0].w_container[4] -= np.ones(task.features.shape)
     nxpop.population[0].w_container[1] += np.ones(task.features.shape)
+    nxpop.flush_updates()
     return nxpop
 
 

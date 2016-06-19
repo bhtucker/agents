@@ -1,0 +1,8 @@
+cached-property==0.1.5
+dateutils==0.6.6
+openpyxl==2.1.4
+pep8==1.5.7
+pyflakes==0.8.1
+python-consul==0.3.13
+python-dateutil==2.2
+six==1.8.0

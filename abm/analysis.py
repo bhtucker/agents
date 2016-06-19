@@ -14,33 +14,38 @@ import numpy as np
 import seaborn as sns
 
 
-def get_shortest_path_likelihood(env, start, end):
+def get_shortest_path_likelihood(env, start, end, paths=None):
     """
     Return the probability of following any the shortest-length paths from start to end
     """
     path_log_likelihood = []
-    try:
-        for path in nx.all_shortest_paths(env.graph, start, end):
-            task = env._generate_task(end)
-            node = env.population[start]
-            for step_ix in path[1:]:
-                try:
-                    softmaxes = learners._exp_over_sumexp(task.features, node.w_container)
-                    path_log_likelihood.append(np.log(softmaxes[step_ix]))
-                except AttributeError:
-                    path_log_likelihood.append(np.log(1./len(node.adjacencies)))
-                node = env.population[step_ix]
-    except nx.NetworkXNoPath:
-        return 0., 0
-    return np.exp(sum(path_log_likelihood)), len(path)
+    path_probas = []
+    for path in (paths or nx.all_shortest_paths(env.graph, start, end)):
+        task = env._generate_task(end)
+        node = env.population[start]
+        for step_ix in path[1:]:
+            try:
+                softmaxes = learners._exp_over_sumexp(task.features, node.w_container)
+                path_log_likelihood.append(np.log(softmaxes[step_ix]))
+            except AttributeError:
+                path_log_likelihood.append(np.log(1./len(node.adjacencies)))
+            node = env.population[step_ix]
+        path_probas.append(np.exp(sum(path_log_likelihood)))
+        path_log_likelihood = []
+    return sum(path_probas), len(path)
 
 
 def get_dyad_data(env, dyads):
+    """
+    Create a dictionary of per-dyad information used in performance monitoring
+    """
     dyad_data = {}
     for dyad in dyads:
         data_dict = {}
         data_dict.update({'start_' + k: v for k, v in get_attrs(env, dyad[0]).items()})
         data_dict.update({'end_' + k: v for k, v in get_attrs(env, dyad[1]).items()})
+        data_dict['shortest_paths'] = list(nx.all_shortest_paths(env.graph, *dyad))
+        data_dict['shortest_path_length'] = len(data_dict['shortest_paths'][0])
         dyad_data[dyad] = data_dict
     return dyad_data
 
@@ -75,8 +80,12 @@ def get_attrs(pop, ix):
 def path_likelihood_with_dyad_traits(env, dyads, dyad_data):
     data = []
     for dyad in dyads:
-        li, plen = get_shortest_path_likelihood(env, *dyad)
-        learnt_over_best = learnt_over_shortest_path_len(env, *dyad)
+        li, plen = get_shortest_path_likelihood(
+            env, *dyad, paths=dyad_data[dyad]['shortest_paths']
+        )
+        learnt_over_best = learnt_over_shortest_path_len(
+            env, *dyad, shortest_len=dyad_data[dyad]['shortest_path_length']
+        )
         data_dict = {'li': li, 'plen': plen, 'learnt_over_best': learnt_over_best}
         data_dict.update(dyad_data[dyad])
         data.append(data_dict)
@@ -96,14 +105,12 @@ def get_dyads(env, target_len=1000):
     return dyads
 
 
-def learnt_over_shortest_path_len(env, start, end):
+def learnt_over_shortest_path_len(env, start, end, shortest_len=None):
     """
     Return the ratio of learnt likeliest path to shortest path len
     """
-    try:
-        shortest_len = nx.shortest_path_length(env.graph, start, end)
-    except nx.NetworkXNoPath:
-        return 0.
+
+    shortest_len = shortest_len or nx.shortest_path_length(env.graph, start, end)
 
     learnt_len = 0
 
@@ -127,22 +134,40 @@ def _group_sample_by_time(samples, key='li'):
     )
 
 
-def plot_learning_df(df, full_mismatch=True, no_mismatch=True, some_mismatch=True, key='li'):
-    attrs = set([c.lstrip('start_') for c in df.columns if c.startswith('start_')]).intersection(
-        set([c.lstrip('end_') for c in df.columns if c.startswith('end_')])
+def segment_learning_df(df, prefixes=['start_', 'end_']):
+    """
+    Separates dyad learning stats df based on whether dyad members
+    have matching / nonmatching / partially matching attributes
+    :param prefixes: specify the column prefixes for dyad attributes
+    returns {segment_name: dataframe slice}
+    """
+    attrs = reduce(
+        lambda a, b: a.intersection(b),
+        [set([c[len(p):] for c in df.columns if c.startswith(p)]) for p in prefixes]
     )
 
-    mismatches = [df['start_' + t] != df['end_' + t] for t in attrs]
-    matches = [df['start_' + t] == df['end_' + t] for t in attrs]
-    if full_mismatch:
-        full_mismatch_df = df[reduce(operator.and_, mismatches)]
-        full_mismatch_ll_samples = _group_sample_by_time(full_mismatch_df, key=key)
-        sns.tsplot(data=full_mismatch_ll_samples.T, color='red')
-    if no_mismatch:
-        full_match_df = df[reduce(operator.and_, matches)]
-        full_match_ll_samples = _group_sample_by_time(full_match_df, key=key)
-        sns.tsplot(data=full_match_ll_samples.T, color='blue')
-    if some_mismatch:
-        some_mismatch_df = df[reduce(operator.or_, matches)]
-        some_mismatch_ll_samples = _group_sample_by_time(some_mismatch_df, key=key)
-        sns.tsplot(data=some_mismatch_ll_samples.T, color='green')
+    # make boolean vectors of where each attr match/don't match
+    matches = [
+        reduce(operator.eq, [df[p + attr] for p in prefixes])
+        for attr in attrs
+    ]
+    return dict(
+        full_mismatch=df[reduce(lambda a, b: ~a & ~b, matches)],
+        full_match=df[reduce(operator.and_, matches)],
+        some_mismatch=df[reduce(operator.xor, matches)]
+    )
+
+
+def plot_segment_stats(segments,
+                       segment_keys=['full_mismatch', 'full_match', 'some_mismatch'],
+                       colors=['red', 'blue', 'green'],
+                       measure_key='li'):
+    for seg_key, color in zip(segment_keys, colors):
+        grouped_time_samples = _group_sample_by_time(segments[seg_key], key=measure_key)
+        sns.tsplot(data=grouped_time_samples.T, color=color)
+
+
+def plot_learning_df(df):
+    segments = segment_learning_df(df)
+    plot_segment_stats(segments)
+    return segments
