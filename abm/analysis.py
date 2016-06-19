@@ -167,7 +167,8 @@ def plot_segment_stats(segments,
         sns.tsplot(data=grouped_time_samples.T, color=color)
 
 
-def plot_learning_df(df):
+def plot_learning_df(df, key='li', **kwargs):
     segments = segment_learning_df(df)
-    plot_segment_stats(segments)
+    segments = [k for k, v in kwargs.items() if v]
+    plot_segment_stats(segments, measure_key=key, segment_keys=segments)
     return segments
