@@ -91,15 +91,15 @@ class Environment(object):
         sender = self.path[-1]
         recipient = self.population[sender].next(self.task, sender=None)
 
-        if self._task_terminated():
+        if not self._task_active():
             self._distribute_awards(self.task)
             self.task = None
         else:
             self.path.append(recipient)
 
-    def _task_terminated(self):
-        return (len(self.path) > 0 and self.path[-1] == self.task.target) \
-          or len(self.path) > self.path_cutoff
+    def _task_active(self):
+        return (len(self.path) > 0 and self.path[-1] != self.task.target) \
+          or len(self.path) <= self.path_cutoff
 
     def _pick_start_end(self):
         return np.random.randint(self.size, size=2).tolist()

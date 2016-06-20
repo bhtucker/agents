@@ -32,6 +32,7 @@ class NxEnvironment(pops.Environment):
         self.entity_class = entity_class
         self.edge_gen_class = edge_gen_class
         self.attr_gen_class = attr_gen_class
+        self.pos = []
 
         self._setup_nx_graph(**entity_kwargs)
 
@@ -81,7 +82,17 @@ class NxEnvironment(pops.Environment):
     def display(self, current=None, target=None):
         if not self.show:
             return
-        nx.draw(self.graph)
+
+        if not self.pos:
+            self.pos = nx.spring_layout(self.graph)
+
+        nx.draw_networkx_nodes(self.graph, self.pos, node_color='blue', node_size=50)
+        nx.draw_networkx_edges(self.graph, self.pos)
+
+        if hasattr(self, "task") and self._task_active():
+            nx.draw_networkx_nodes(self.graph, self.pos, nodelist=[self.task.target], node_color='red', node_size=90)
+            nx.draw_networkx_nodes(self.graph, self.pos, nodelist=[self.path[-1]], node_color='green', node_size=90)
+
         plt.show()
 
     def describe(self):
