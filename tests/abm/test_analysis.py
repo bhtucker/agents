@@ -49,6 +49,7 @@ def learnt_nxpop(nxpop):
         nxpop.population[i].award(1000)
     nxpop.population[0].w_container[4] -= np.ones(task.features.shape)
     nxpop.population[0].w_container[1] += np.ones(task.features.shape)
+    nxpop.policy_duration = 0
     nxpop.flush_updates()
     return nxpop
 

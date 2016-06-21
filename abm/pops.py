@@ -40,8 +40,10 @@ class Environment(object):
         routed through <path>.
         """
         if len(self.path) >= self.path_cutoff:
+            # detect failure
             return -1. / self.path_cutoff
-        k = float(len(path))
+        # in a one traversal case, the one traversal gets all the credit
+        k = float(len(path) - 1)
         return (task.value / k)
 
     def initiate_task(self, fixed_pair=None):
