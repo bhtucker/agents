@@ -136,29 +136,32 @@ class SoftmaxNxEnvironment(pops.TaskFeatureMixin, NxEnvironment):
         )
 
     def flush_updates(self):
+        """
+        Checks for flushing condition, and tells entities to flush if necessary
+        """
+        if self.update_count < self.policy_duration:
+            return
         for node in self.population.itervalues():
             if node.update_buffer:
                 node.flush_updates()
+        self.update_count = 0
 
     def _distribute_awards(self, task):
         self.update_count += 1
         super(SoftmaxNxEnvironment, self)._distribute_awards(task)
-        if self.update_count >= self.policy_duration:
-            self.flush_updates()
 
 
 class PathTreeMixin(object):
     """
     Track the message traversals in a nx graph datastructure
-    Give awards based on direct distance from element to target,
-    with highest awards given in the middle of the path.
+    Give awards based on direct distance from element to target
     """
-    advantage_distribution = norm(0, .33)
+    gamma = .91
 
     def _calculate_direct_lengths(self):
         """
         Convert our path with potential loops into a directed tree
-        Store the normalized direct distance for each node in the path
+        Store the direct distance for each node in the path
         """
         g = nx.DiGraph()
         path = self.path
@@ -169,35 +172,35 @@ class PathTreeMixin(object):
             if not g.neighbors(pair[0]):
                 g.add_edge(*pair)
 
-        direct_path_lens = {
+        self.direct_path_lens = {
             n: nx.shortest_path_length(g, n, target)
             for n in g.node
+            if n != target
         }
 
-        max_len = float(max(direct_path_lens.values()))
+    def _get_discounted_reward(self, path_len):
+        # returns discount factor for current step in 0 - 1 interval 
+        # (first term is normalization by infinite geometric series)
+        return ((1 - self.gamma) / self.gamma) * (self.gamma ** path_len)
+    
+        # else:
+        #     # use a set of all non-terminal nodes to give each one penalty
+        #     self.direct_path_lens = set(self.path[:-1])
 
-        self.normalized_node_len_map = {
-            n: (p / max_len) - .5
-            for n, p in direct_path_lens.iteritems()
-        }
-
-    def _distribute_awards(self, task):
-        if self.path[-1] == task.target:
-            self._calculate_direct_lengths()
-        else:
-            self.normalized_node_len_map = None
-
-        for node in self.path_tree.node:
-            amount = self._calculate_award(task, _, node)
-            self.population[node].award(amount)
+        # for node in self.direct_path_lens:
+        #     amount = self._calculate_award(task, self.path, node, success)
+        #     self.population[node].award(amount)
 
     def _calculate_award(self, task, path, entity):
-        if self.normalized_node_len_map is None:
-            return 0
-        normalized_len = self.normalized_node_len_map[entity]
-        advantage_coef = self.advantage_distribution.pdf(normalized_len)
-        return advantage_coef * task.value
+        if not self.path[-1] == task.target:
+            return -1. / len(path)
+        return self._get_discounted_reward(self.direct_path_lens[entity])
 
 
 class SoftmaxNxPathTreeEnvironment(PathTreeMixin, SoftmaxNxEnvironment):
     __doc__ = '\n'.join([SoftmaxNxEnvironment.__doc__, PathTreeMixin.__doc__])
+
+    def _distribute_awards(self, task):
+        if self.path[-1] == task.target:
+            self._calculate_direct_lengths()
+        super(SoftmaxNxPathTreeEnvironment, self)._distribute_awards(task)

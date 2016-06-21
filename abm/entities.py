@@ -18,7 +18,7 @@ class Task(object):
         self.start = start
         self.target = target
         self.id = uuid4()
-        self.value = 100
+        self.value = 1.
         if features is not None:
             self.features = features
 
