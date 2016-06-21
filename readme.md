@@ -51,3 +51,22 @@ The project implements many different mechanisms in which agents decide who to
 handle the message. Most importantly, by comparing feature vectors of the
 recipient to those of its adjacencies. (Assuming that agents with similar
 features are closer in the network.)
+
+
+## Installing
+
+If you have your numeric computing dependencies in order (ie libgfortran or gcc), simply `clone` the repo and `pip install .` from the project root.
+
+This project uses `matplotlib`, so you may need to consult the [FAQ](matplotlib.org/faq/virtualenv_faq.html) if you're using virtualenv.
+
+If you're using or would like to use `conda`, you may prefer to use the `conda install` command from `.travis.yml`, and then only use `pip` for `requirements-travis.txt`.
+
+
+## Contributing
+
+The modular implementation should make it possible for contributors to add new learning methods or network features.
+
+The recommended contribution path is making a branch, trying out your feature in a script (see `/scripts`), and then discussing with an existing contributor or, if you feel comfortable, implementing it into `abm`. The next step would be an `analysis` script showing how this addition affects performance, adding `tests` to cover your additions, and a pull request.
+
+
+
