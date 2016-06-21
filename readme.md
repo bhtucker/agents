@@ -78,3 +78,12 @@ The recommended contribution path is making a branch, trying out your feature in
 >>> analysis.get_attrs(pop, 3)
 {u'color': u'blue', u'region': u'east'}
 ```
+
+## Generate documentation
+
+Once you have forked this branch, you can do
+
+```
+$ sphinx-apidoc -o source/ abm -Ef
+$ make html
+```
