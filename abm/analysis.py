@@ -113,7 +113,6 @@ def learnt_over_shortest_path_len(env, start, end, shortest_len=None):
     shortest_len = shortest_len or nx.shortest_path_length(env.graph, start, end)
 
     learnt_len = 0
-
     task = env._generate_task(end)
     node = env.population[start]
     while node.index != end and learnt_len < 40:
