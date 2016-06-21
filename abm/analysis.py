@@ -76,6 +76,26 @@ def get_env_likelihood_samples(env, as_df=True, n_tasks=36000, sample_each=400, 
 
 
 def get_attrs(pop, ix):
+    """
+    Get features from node ix in pop.
+
+    :param pop: an Environment
+    :param ix: a node label
+    :return: key-value pairs of the node's features
+    :rtype: dict
+
+    :Example:
+
+    >>> from abm import analysis, nxpops, io
+    >>> cfg = io.ConfigReader('../setup.json').get_config()
+    >>> pop = nxpops.SoftmaxNxEnvironment(**cfg)
+    >>> analysis.get_attrs(pop, 3)
+    {u'color': u'blue', u'region': u'east'}
+
+    .. note:: the keys in the returned dict are read from pop.attributes
+    .. seealso:: :func:`get_dyad_data`
+    .. warning:: ix must be a valid node index
+    """
     return {key: pop.population[ix][key] for key in pop.attributes}
 
 
