@@ -24,20 +24,23 @@ class Environment(object):
 
     def _distribute_awards(self, task):
         awarded = set()
-        for point in self.path:
+        # the last entry in the path is the stopping point, which made no decisions
+        for point in self.path[:-1]:
             if point in awarded:
                 continue
             awarded.add(point)
             amount = self._calculate_award(task, self.path, point)
             self.population[point].award(amount)
+        if hasattr(self, 'flush_updates'):
+            self.flush_updates()
 
     def _calculate_award(self, task, path, entity):
         """
         Returns the amount awarded to <entity> after <task> has been
         routed through <path>.
         """
-        if len(self.path) > self.path_cutoff:
-            return 0.
+        if len(self.path) >= self.path_cutoff:
+            return -1. / self.path_cutoff
         k = float(len(path))
         return (task.value / k)
 
@@ -64,15 +67,17 @@ class Environment(object):
 
     def _run_task(self, start, task):
 
+        self.path.append(start)
+        # take first step
         recipient = self.population[start].next(task, sender=None)
         sender = start
-        self.path.append(start)
+        self.path.append(recipient)
 
-        while not (recipient == task.target or len(self.path) > self.path_cutoff):
-            self.path.append(recipient)
+        while not (recipient == task.target or len(self.path) >= self.path_cutoff):
             next_recipient = self.population[recipient].next(task, sender=sender)
             sender = recipient
             recipient = next_recipient
+            self.path.append(recipient)
 
         self._distribute_awards(task)
 
