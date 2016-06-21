@@ -51,3 +51,14 @@ The project implements many different mechanisms in which agents decide who to
 handle the message. Most importantly, by comparing feature vectors of the
 recipient to those of its adjacencies. (Assuming that agents with similar
 features are closer in the network.)
+
+
+## Example
+
+```
+>>> from abm import analysis, nxpops, io
+>>> cfg = io.ConfigReader('../setup.json').get_config()
+>>> pop = nxpops.SoftmaxNxEnvironment(**cfg)
+>>> analysis.get_attrs(pop, 3)
+{u'color': u'blue', u'region': u'east'}
+```
