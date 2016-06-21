@@ -87,3 +87,6 @@ Once you have forked this branch, you can do
 $ sphinx-apidoc -o source/ abm -Ef
 $ make html
 ```
+
+Some basic rst formamtting can be found
+[here](http://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html)
