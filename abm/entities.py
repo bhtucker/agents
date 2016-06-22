@@ -14,8 +14,7 @@ from abm.learners import SoftmaxLearnerMixin, DunceMixin
 class Task(object):
     """Represents a message to be routed."""
 
-    def __init__(self, start, target, features=None):
-        self.start = start
+    def __init__(self, target, features=None):
         self.target = target
         self.id = uuid4()
         self.value = 1.
