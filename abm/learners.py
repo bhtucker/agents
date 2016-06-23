@@ -10,7 +10,7 @@ import numpy as np
 import operator
 
 from random import choice
-from numpy.random import choice as npchoice
+from numpy.random import choice as _npchoice
 
 
 class DunceMixin(object):
@@ -56,7 +56,7 @@ class SoftmaxLearnerMixin(object):
             # don't actually use your weights to decide if the neighbor is visible
             self.last_recipient = decision = task.target
         else:
-            decision = npchoice(self.softmaxes.keys(), p=self.softmaxes.values())
+            decision = _npchoice(self.softmaxes.keys(), p=self.softmaxes.values())
             self.last_recipient = decision
         return decision
 
