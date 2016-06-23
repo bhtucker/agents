@@ -48,4 +48,3 @@ def test_distribute_awards(basicenv):
     basicenv.path = [5] * (basicenv.path_cutoff + 1)
     basicenv._distribute_awards(task)
     assert basicenv.population[5].total_award == -.05
-
